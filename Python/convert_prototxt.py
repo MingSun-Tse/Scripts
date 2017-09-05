@@ -1,5 +1,5 @@
 import sys
-def add_prune_ratio(protofile, prune_ratios, deltas):
+def add_param(protofile, prune_ratios, deltas):
     '''
         Usage: python convert_prototxt.py  alexnet.prototxt  /0~5:0.75,6-8:0.5,9:0.4/  /:0.1/
         Do NOT use blanks in /.../
@@ -76,12 +76,12 @@ def add_prune_ratio(protofile, prune_ratios, deltas):
     for k in sorted(ks):
         print str(k) + "  " + layer_pratio[str(k)] + "  " + "0.1"
 
-def convert_layer_name(protofile):
+def rename_layer(protofile):
     '''
         Another idea: serach "Convolution", then replace the name, this may be simpler.
     '''
     assert protofile.split(".")[-1] == "prototxt"
-    out = open(protofile.replace(".prototxt", "_converted.prototxt"), "w+")
+    out = open(protofile.replace(".prototxt", "_renamed.prototxt"), "w+")
     lines = [l for l in open(protofile, "r")]
     layer_index = 0 # TODO: maybe we should allow for fc layers
     layer_names = []
@@ -126,7 +126,7 @@ def convert_layer_name(protofile):
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
-        convert_layer_name(str(sys.argv[1]))
+        rename_layer(str(sys.argv[1]))
     elif len(sys.argv) == 4:
-        add_prune_ratio(sys.argv[1], sys.argv[2], sys.argv[3])
+        add_param(sys.argv[1], sys.argv[2], sys.argv[3])
     
