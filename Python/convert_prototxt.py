@@ -59,13 +59,14 @@ def add_param(protofile, prune_ratios, deltas):
                 layer_index = lines[i+t].split('"')[1].split("[")[1].split("]")[0]
             
             # got layer_index
+            delta = '0'
             if layer_index in layer_pratio.keys():
                 pratio = layer_pratio[layer_index]
                 # add prune_ratio just before convolution_param{...}
                 blanks = lines[i].split("convolution_param")[0]
                 out.write(blanks + "prune_param {\n" 
                           + blanks*2 + "prune_ratio: " + pratio + "\n"
-                          + blanks*2 + "delta: 0.1\n" 
+                          + blanks*2 + "delta: " + delta + "\n" 
                           + blanks + "}\n")
             
         out.write(lines[i])
@@ -74,7 +75,7 @@ def add_param(protofile, prune_ratios, deltas):
     ks = [int(k) for k in layer_pratio.keys()]
     print "#" + "  " + "prune_ratio" + "  " + "delta" 
     for k in sorted(ks):
-        print str(k) + "  " + layer_pratio[str(k)] + "  " + "0.1"
+        print str(k) + "  " + layer_pratio[str(k)] + "  " + delta
 
 def rename_layer(protofile):
     '''
@@ -128,5 +129,5 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         rename_layer(str(sys.argv[1]))
     elif len(sys.argv) == 4:
-        add_param(sys.argv[1], sys.argv[2], sys.argv[3])
+        add_param(*sys.argv[1:])
     

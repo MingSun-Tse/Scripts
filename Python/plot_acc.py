@@ -9,7 +9,7 @@ color_set = ("r", "b", "g", "k", "c", "y")
 nets = ("caffenet", "cifar10_full")
 net = "None"
 col_num = {"cifar10_full":(75, 800, 800), 
-           "caffenet":(363, 1200, 2304, 1728, 1728)} # layer 2,4,5, group = 2
+           "caffenet":(363, 1200, 2304, 1728, 1728)} ## layer 2,4,5, group = 2
 
 def plot_acc(log_file):
     val_acc = []; val_acc_top_5 = []; val_loss = []
@@ -24,31 +24,31 @@ def plot_acc(log_file):
             IF_find_net = True
             
     
-        if "Test net output" in lines[i] and "accuracy = " in lines[i]: # val acc
+        if "Test net output" in lines[i] and "accuracy = " in lines[i]: ## val acc
             j = 1
             while(not lines[i-j].split("Iteration ")[-1].split(",")[0].isdigit()):
                 j = j + 1
             val_acc.append([int(lines[i-j].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("= ")[-1])])
 
-        if "Test net output" in lines[i] and "accuracy_top_5 = " in lines[i]: # val acc top-5 
+        if "Test net output" in lines[i] and "accuracy_top_5 = " in lines[i]: ## val acc top-5 
             j = 1
             while(not lines[i-j].split("Iteration ")[-1].split(",")[0].isdigit()):
                 j = j + 1
             val_acc_top_5.append([int(lines[i-j].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("= ")[-1])])
             
-        if "Test net output" in lines[i] and "loss" in lines[i]: # val loss
+        if "Test net output" in lines[i] and "loss" in lines[i]: ## val loss
             k = 2
             while(not lines[i-k].split("Iteration ")[-1].split(",")[0].isdigit()):
                 k = k + 1
             val_loss.append([int(lines[i-k].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("loss = ")[-1].split(" ")[0])])
         
-        if "Train net output" in lines[i] and "loss" in lines[i]: # train loss
+        if "Train net output" in lines[i] and "loss" in lines[i]: ## train loss
             t = 1
             while(not lines[i-t].split("Iteration ")[-1].split(",")[0].isdigit()):
                 t = t + 1
             train_loss.append([int(lines[i-t].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("loss = ")[-1].split(" ")[0])]) 
         
-        if "Iteration" in lines[i] and "loss = " in lines[i]: # smoothed train loss
+        if "Iteration" in lines[i] and "loss = " in lines[i]: ## smoothed train loss
             train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("loss = ")[-1])])
 
     assert(len(val_acc) == len(val_loss))
@@ -76,7 +76,7 @@ def plot_acc(log_file):
     plt.grid(True)
     plt.legend()
     
-    #Save 
+    ##Save 
     plt.savefig(log_file.split(".txt")[0] + ".png", dpi = 500)
     plt.close()
     np.save(log_file.split(".txt")[0] + ".npy", val_acc)
@@ -92,82 +92,80 @@ def plot_prune(log_file):
     recover_prob_time = {}
     
     for i in range(len(lines)):
-        
-        if lines[i][26:43] == "num_pruned_column":
-            if lines[i][:5] in prune_num.keys():
+        layer_name = lines[i].split("  ")[0]
+        if "pruned_ratio" in lines[i]:
+            if layer_name in prune_num.keys():
                 k = 1; 
                 while(not ("Step" in lines[i-k])): 
                     k = k + 1
-                prune_num[lines[i][:5]].append([int(lines[i-k].split(" ")[2]), int(lines[i].split("num_pruned_column:")[1].split("num_col_to_prune")[0].strip())]) # [step, num_pruned_column]
+                prune_num[layer_name].append([int(lines[i-k].split(" ")[2]), float(lines[i].split("pruned_ratio:")[1].split("prune_ratio")[0].strip())]) ## [step, num_pruned_column]
             else:    
                 t = 1
                 while(not ("Step" in lines[i-t])):
                     t = t + 1
-                prune_num[lines[i][:5]] = [[int(lines[i-t].split(" ")[2]), int(lines[i].split("num_pruned_column:")[1].split("num_col_to_prune")[0].strip())]]
+                prune_num[layer_name] = [[int(lines[i-t].split(" ")[2]), float(lines[i].split("pruned_ratio:")[1].split("prune_ratio")[0].strip())]]
                 
-        elif lines[i][:14] == "learning_speed":
+        elif "learning_speed" in lines[i]:
             t = 1
             while(not ("Step" in lines[i-t])):
                 t = t + 1
             lspeed.append([int(lines[i-t].split(" ")[2]), float(lines[i].split(" ")[-1])])
             
-        elif lines[i][:6] == "update":
+        elif "update" in lines[i]:
             if lines[i].split(" ")[-3] in update_prob_time.keys():
                 update_prob_time[lines[i].split(" ")[-3]].append(int(lines[i].split(" ")[-1])) 
             else:    
                 update_prob_time[lines[i].split(" ")[-3]] = [int(lines[i].split(" ")[-1])]
                 
-        elif lines[i][:7] == "recover":
+        elif "recover" in lines[i]:
             if lines[i].split(" ")[-3] in recover_prob_time.keys():
                 recover_prob_time[lines[i].split(" ")[-3]].append(int(lines[i].split(" ")[-1])) 
             else:
                 recover_prob_time[lines[i].split(" ")[-3]] = [int(lines[i].split(" ")[-1])]
 
         elif lines[i][:3] == "last":
-            if lines[i][:5] in prune_complete_time.keys():
+            if layer_name in prune_complete_time.keys():
                 k = 1
                 while(not ("Step" in lines[i-k])): 
                     k = k + 1
-                prune_complete_time[lines[i][:5]].append(int(lines[i-k].split(" ")[2])) 
+                prune_complete_time[layer_name].append(int(lines[i-k].split(" ")[2])) 
             else:    
                 t = 1
                 while(not ("Step" in lines[i-t])):
                     t = t + 1
-                prune_complete_time[lines[i][:5]] = [int(lines[i-t].split(" ")[2])]
+                prune_complete_time[layer_name] = [int(lines[i-t].split(" ")[2])]
             
-            
-    
-    
-    # Calcute pruning ratio and save
+
+    ## Calcute pruning ratio and save
     prune_ratio = {}
     for layer, num in prune_num.items():
         num = np.array(num)
-        prune_ratio[layer] = num[:,1] * 1.0 / col_num[net][int(layer[4]) - 1] # TODO: replace layer[4]
+        prune_ratio[layer] = num[:,1] * 1.0 / col_num[net][int(layer[0])] ## TODO: replace layer[4]
     ratios = np.array([num[:,0], prune_ratio]) 
     np.save(log_file.split(".txt")[0]+".npy", ratios)
     
 
     plt.subplot(2,1,1)
-    # Plot Pruning Number
+    ## Plot Pruning Number
     for layer, num in prune_num.items():
         num = np.array(num)
-        plt.plot(num[:,0], num[:,1], "-", color = color_set[int(layer[4])-1], label = layer)
+        plt.plot(num[:,0], num[:,1], "-", color = color_set[int(layer[0])], label = layer)
     
-    # Plot Pruning Complete Time 
+    ## Plot Pruning Complete Time 
     for layer, iter in prune_complete_time.items():
         print iter
         assert len(iter) == 1
         plt.plot([iter[0], iter[0]], [0, max(total_num.values())], "-k")
         
         
-    plt.xlabel("Step"); plt.ylabel("Number of Pruned Column")
+    plt.xlabel("Step"); plt.ylabel("pruned ratio")
     plt.legend()
     plt.grid(True)
     
-    # Plot learning speed
+    ## Plot learning speed
     plt.subplot(2,1,2)
-    lspeed = [[i[0], max(i[1],0)] for i in lspeed] # only plot positive values
-    lspeed = np.array(lspeed[50:]) # begin from 10, to discard some trash data
+    lspeed = [[i[0], max(i[1],0)] for i in lspeed] ## only plot positive values
+    lspeed = np.array(lspeed[50:]) ## begin from 10, to discard some trash data
     lspeed_undersampled = lspeed[::200,:] 
     plt.plot(lspeed[:,0], lspeed[:,1], "-b")
     plt.plot(lspeed_undersampled[:,0], lspeed_undersampled[:,1], "-k")
@@ -180,16 +178,13 @@ def plot_prune(log_file):
     print ("Plot pruning - done!")
     
 def plot_acc_prune(f1, f2):
-    # RelativeRatio = {"conv1":0.2, "conv2":0.4, "conv3":0.4}
     if "acc" in f2: 
-        f1, f2 = f2, f1 # f1: acc  f2: prune, they must be ".npy" file.
+        f1, f2 = f2, f1 ## f1: acc  f2: prune, they must be ".npy" file.
     val_acc = np.load(f1)
     ratios  = np.load(f2)
     plt.plot(val_acc[:,0], val_acc[:,1], "-g", label = "validation accuracy")
     for l, r in ratios[1].items():
-        plt.plot(ratios[0], r, "-", color = color_set[int(l[4])-1], label = l)
-    total_ratio = ratios[1]["conv1"] * 0.2 + ratios[1]["conv2"] * 0.4 + ratios[1]["conv3"] * 0.4
-    plt.plot(ratios[0], total_ratio, "-k", label = "total pruning ratio")
+        plt.plot(ratios[0], r, "-", color = color_set[int(l[0])], label = l)
     
     plt.xlabel("Step")
     plt.grid(True)
@@ -204,8 +199,8 @@ if __name__ == "__main__":
     timestamp = str(sys.argv[1]).split("/log")[1].split("_")[1]
     print ("Timestamp is: " + timestamp)
     files = [os.path.join(path, i) for i in os.listdir(path) if timestamp in i and os.path.splitext(i)[1] == ".txt"]
-    files.sort() # sort to make sure plot acc first
-    for f in files: # files must use complete path! 
+    files.sort() ## sort to make sure plot acc first
+    for f in files: ## files must use complete path! 
         if "log" in f and "acc" in f:
             plot_acc(f)
         elif "log" in f and "prune" in f:

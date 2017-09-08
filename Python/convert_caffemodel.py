@@ -12,8 +12,10 @@ def rename_layer(model_old, weights_old, model_new, IF_save):
     sys.path.insert(0, os.path.join(CAFFE_ROOT, "python"))
     import caffe as c
     
-    net_old = c.Net(model_old, weights_old, c.TEST)
-    net_new = c.Net(model_new, weights_old, c.TEST)
+    flag1 = c.TRAIN if "train" in model_old else c.TEST
+    flag2 = c.TRAIN if "train" in model_new else c.TEST
+    net_old = c.Net(model_old, weights_old, flag1)
+    net_new = c.Net(model_new, weights_old, flag2)
     weights = {}
     
     for layer, param in net_new.params.iteritems():
@@ -39,14 +41,15 @@ def rename_layer(model_old, weights_old, model_new, IF_save):
 
 def rename_layer_add_param(weights_old, model_new, weights_new):
     '''
-        Usage: python convert_caffemodel.py  weights_old  model_new  weights_new
+        Usage: python convert_caffemodel.py  weights.pickle  deploy_renamed_added.prototxt  _iter_1.caffemodel
     '''
     assert weights_old.split(".")[-1] == "pickle"
-    CAFFE_ROOT = "/home/wanghuan/Caffe/Caffe_pruning_filter"
+    CAFFE_ROOT = "/home/wanghuan/Caffe/Caffe_APP"
     sys.path.insert(0, os.path.join(CAFFE_ROOT, "python"))
     import caffe as c
     
-    net_new = c.Net(model_new, weights_new, c.TEST)
+    flag = c.TRAIN if "train" in model_new else c.TEST
+    net_new = c.Net(model_new, weights_new, flag)
     with open(weights_old, "rb") as f:
         weights = pickle.load(f)
     for layer, param in net_new.params.iteritems():

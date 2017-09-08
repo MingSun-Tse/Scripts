@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import sys
 import argparse
 
-caffe_root = "/home/wanghuan/Caffe/Caffe_default/"
+#caffe_root = "/home/wanghuan/Caffe/Caffe_default/"
+caffe_root="/home/wanghuan/Caffe/Caffe_APP/"
 sys.path.insert(0, caffe_root + 'python')
 import caffe as c
 
