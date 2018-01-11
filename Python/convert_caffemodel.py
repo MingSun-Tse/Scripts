@@ -31,7 +31,7 @@ def rename_layer(model_old, weights_old, model_new, IF_save):
                 weights[layer] = [net_old.params[layer_old][k].data]
         
     net_new.save(weights_old.split(".caffemodel")[0] + "_renamed.caffemodel")
-    if IF_save:
+    if IF_save == "1":
         save_name = weights_old.split(".caffemodel")[0] + "_renamed_weights.pickle"
         with open(save_name, 'wb') as f:
             pickle.dump(weights, f)

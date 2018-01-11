@@ -1,0 +1,48 @@
+Here is `StartInternalThread` in parallel.cpp
+Here is `is_started` in parallel.cpp
+0
+Here is `is_started` in parallel.cpp
+Here is 01 in parallel.cpp
+Here is `StartInternalThread` in parallel.cpp
+Here is `is_started` in parallel.cpp
+0
+Here is `is_started` in parallel.cpp
+Here is 01 in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `StartInternalThread` in parallel.cpp
+Here is `is_started` in parallel.cpp
+0
+Here is `is_started` in parallel.cpp
+Here is 01 in parallel.cpp
+Here is `StartInternalThread` in parallel.cpp
+Here is `is_started` in parallel.cpp
+0
+Here is `is_started` in parallel.cpp
+Here is 01 in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `StartInternalThread` in parallel.cpp
+Here is `is_started` in parallel.cpp
+0
+Here is `is_started` in parallel.cpp
+Here is 01 in parallel.cpp
+Here is `StartInternalThread` in parallel.cpp
+Here is `is_started` in parallel.cpp
+0
+Here is `is_started` in parallel.cpp
+Here is 01 in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+Here is `is_started` in parallel.cpp
+test_iter is: 1000
+acurracy: 0.677159  0.880342
+test_iter is: 1000
+acurracy: 0.676039  0.880602
+test_iter is: 1000
+acurracy: 0.674039  0.879261

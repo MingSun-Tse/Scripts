@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import numpy as np
 import matplotlib
@@ -5,157 +6,218 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import os
 
-color_set = ("r", "b", "g", "k", "c", "y")
-nets = ("caffenet", "cifar10_full")
-net = "None"
-col_num = {"cifar10_full":(75, 800, 800), 
-           "caffenet":(363, 1200, 2304, 1728, 1728)} ## layer 2,4,5, group = 2
+ColorSet = ("r", "b", "g", "k", "c", "y")
+CntPlot  = 0
+Nets = ("caffeNet", "cifar10_full")
+Net  = "None"
+ColNum = {"cifar10_full":(75, 800, 800), 
+           "caffeNet":(363, 1200, 2304, 1728, 1728)} ## layer 2,4,5, group = 2
 
-def plot_acc(log_file):
-    val_acc = []; val_acc_top_5 = []; val_loss = []
-    train_loss= []; train_loss_smoothed  = []
+def plot_acc(log_file, ID):
+    val_acc             = []
+    val_acc5            = []
+    val_loss            = []
+    train_loss          = []
+    train_loss_smoothed = []
+    acc5_of_diff_lr_stage = {} # like the accuracies when lr = 0.005
+    global CntPlot
+
     
+    ## Parsing
     lines = [l.strip() for l in open(log_file)]
-    IF_find_net = False
+    IF_find_Net = False
     for i in range(len(lines)):
-        if ~IF_find_net and '"' in lines[i] and lines[i].lower().split('"')[1] in nets: 
-            global net
-            net = lines[i].lower().split('"')[1]
-            IF_find_net = True
-            
-    
-        if "Test net output" in lines[i] and "accuracy = " in lines[i]: ## val acc
+        ## get net name
+        if (not IF_find_Net) and '"' in lines[i] and lines[i].lower().split('"')[1] in Nets: 
+            global Net
+            Net = lines[i].lower().split('"')[1]
+            IF_find_Net = True
+        
+        
+        ## val acc
+        if "Test net output" in lines[i] and "accuracy = " in lines[i]:
+            acc_ =  float(lines[i].split("= ")[-1])
             j = 1
             while(not lines[i-j].split("Iteration ")[-1].split(",")[0].isdigit()):
                 j = j + 1
-            val_acc.append([int(lines[i-j].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("= ")[-1])])
-
-        if "Test net output" in lines[i] and "accuracy_top_5 = " in lines[i]: ## val acc top-5 
+            iter_ = int(lines[i-j].split("Iteration ")[-1].split(",")[0])
+            val_acc.append([iter_, acc_])
+            
+        
+        ## val acc top5 
+        if "Test net output" in lines[i] and "accuracy_top_5 = " in lines[i]:
+            acc_ =  float(lines[i].split("= ")[-1])
             j = 1
             while(not lines[i-j].split("Iteration ")[-1].split(",")[0].isdigit()):
                 j = j + 1
-            val_acc_top_5.append([int(lines[i-j].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("= ")[-1])])
+            iter_ = int(lines[i-j].split("Iteration ")[-1].split(",")[0])
+            val_acc5.append([iter_, acc_])
             
-        if "Test net output" in lines[i] and "loss" in lines[i]: ## val loss
+            # get acc of each learning rate
+            j = 1
+            while(not "lr = " in lines[i+j]):
+                j += 1
+            lr_ = str(float(lines[i+j].split("lr = ")[-1])) # for '1e-4' -> '0.0001'
+            if lr_ in acc5_of_diff_lr_stage.keys():
+                acc5_of_diff_lr_stage[lr_].append([iter_, acc_])
+            else:
+                acc5_of_diff_lr_stage[lr_] = [[iter_, acc_]]
+        
+        ## val loss
+        if "Test net output" in lines[i] and "loss" in lines[i]:
             k = 2
             while(not lines[i-k].split("Iteration ")[-1].split(",")[0].isdigit()):
                 k = k + 1
-            val_loss.append([int(lines[i-k].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("loss = ")[-1].split(" ")[0])])
+            val_loss.append([int(lines[i-k].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1].split(" ")[0])])
         
-        if "Train net output" in lines[i] and "loss" in lines[i]: ## train loss
+        ## train loss
+        if "Train net output" in lines[i] and "loss" in lines[i]: 
             t = 1
             while(not lines[i-t].split("Iteration ")[-1].split(",")[0].isdigit()):
                 t = t + 1
-            train_loss.append([int(lines[i-t].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("loss = ")[-1].split(" ")[0])]) 
+            train_loss.append([int(lines[i-t].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1].split(" ")[0])]) 
         
-        if "Iteration" in lines[i] and "loss = " in lines[i]: ## smoothed train loss
-            train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(",")[0]), float(lines[i].split("loss = ")[-1])])
+        ## smoothed train loss
+        if "Iteration" in lines[i] and "loss = " in lines[i]: 
+            train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1])])
 
+            
+    ## Converted to np array for convenience
     assert(len(val_acc) == len(val_loss))
-    train_loss = np.array(train_loss)
+    train_loss          = np.array(train_loss)
     train_loss_smoothed = np.array(train_loss_smoothed)
-    val_loss = np.array(val_loss)
-    val_acc = np.array(val_acc)
-    val_acc_top_5 = np.array(val_acc_top_5)
+    val_loss            = np.array(val_loss)
+    val_acc             = np.array(val_acc)
+    val_acc5            = np.array(val_acc5)
     
-    plt.subplot(211)
-    plt.xlabel("Step"); plt.ylabel("Loss")
-    plt.plot(train_loss[:,0], train_loss[:,1], "-b", label = "train loss")
-    plt.plot(val_loss[:,0], val_loss[:,1], "-r", label = "validation loss")
-    plt.plot(train_loss_smoothed[:,0], train_loss_smoothed[:,1], "-k", label = "smoothed train loss")
-    plt.grid(True)
-    plt.legend()
+    ## Print statistics
+    print ("\ntimeID: %s" % ID)
+    lrs = sorted([float(i) for i in acc5_of_diff_lr_stage.keys()], reverse=True)
+    for lr in lrs:
+        acc5 = np.array(acc5_of_diff_lr_stage[str(lr)])
+        iter_begin = int(acc5[0, 0]) # the iter to begin this lr
+        max_acc = max(acc5[:, 1]) # the max acc during this lr
+        min_acc = min(acc5[:, 1]) # the min acc during this lr
+        ave_acc = np.average(acc5[:, 1]) # the average acc during this lr
+        print ("lr = {:7.5f}({}):  {:7.5f} - {:7.5f} - {:7.5f}".format(lr, iter_begin, min_acc, max_acc, ave_acc))
+
+    max_acc5 = float(("%4.10f" % max(val_acc5[:,1]))[:4]) # use `.10f`, in order not to round
+    min_acc5 = float(("%4.10f" % min(val_acc5[:,1]))[:4])
+    step = 0.01
+    sep = "   "
+    print ("acc_min", end=sep)
+    for acc5 in np.arange(min_acc5, max_acc5, step):
+        print ("%4.2f+" % acc5, end=sep)
+    print ("acc_max")
+    print ("%7.5f" % min(val_acc5[:,1]), end=sep)
+    for acc5 in np.arange(min_acc5, max_acc5, step):
+        num = len(np.where(np.logical_and(val_acc5[:,1]>=acc5,  val_acc5[:,1]<acc5+step))[0])
+        print ("%5d" % num, end=sep)
+    print ("%7.5f" % max(val_acc5[:,1]))
+
     
+    ## Plot loss
+    # plt.plot(train_loss[:,0], train_loss[:,1], "-k", label = "train loss")
+    # train_loss_smoothed = smooth(train_loss_smoothed, 1000)
+    # plt.plot(train_loss_smoothed[:,0], train_loss_smoothed[:,1], "-b", label = "smoothed train loss")
     
-    plt.subplot(212)
-    plt.xlabel("Step"); plt.ylabel("Accuracy")
-    plt.plot(val_acc[:,0], val_acc[:,1], "-g", label = "validation")
-    if len(val_acc_top_5) != 0:
-        plt.plot(val_acc_top_5[:,0], val_acc_top_5[:,1], "-c", label = "validation top-5")
-    plt.plot(val_acc[:,0], [0.81] * len(val_acc[:,0]), "-r", label = "acc = 0.81")
-    plt.grid(True)
-    plt.legend()
+    # if len(val_loss):
+        # plt.plot(val_loss[:,0], val_loss[:,1], "-", color = ColorSet[CntPlot%len(ColorSet)], label = "val_%s_loss"%ID); CntPlot += 1
     
-    ##Save 
-    plt.savefig(log_file.split(".txt")[0] + ".png", dpi = 500)
-    plt.close()
-    np.save(log_file.split(".txt")[0] + ".npy", val_acc)
-    print ("Plot accuracy and loss - done!")
-    
+    ## Plot val acc
+    if len(val_acc):
+        smoothed_val_acc = smooth(val_acc[:,1], 10)
+        myprint (diff(smoothed_val_acc * 100))
+        plt.plot(val_acc[:,0], smoothed_val_acc, "-", color=ColorSet[CntPlot%len(ColorSet)], label="%s_val_acc"%ID); CntPlot += 1
+        if len(val_acc5):
+            smoothed_val_acc5 = smooth(val_acc5[:,1], 10)
+            myprint (diff(smoothed_val_acc5 * 100))
+            plt.plot(val_acc5[:,0], smoothed_val_acc5, "-", color=ColorSet[CntPlot%len(ColorSet)], label="%s_val_acc5"%ID); CntPlot += 1
+            
+def smooth(L, window = 50):
+    print ("call smooth, window = ", window)
+    out = []
+    num = len(L)
+    for i in range(num):
+        if i >= window:
+            out.append(np.average(L[i-window: i])) 
+        else:
+            out.append(np.average(L[:i+1]))
+    return np.array(out) if type(L) == type(np.array([0])) else out
+
+def diff(L):
+    out = []
+    num = len(L)
+    for i in range(num-1):
+        out.append(float("%.3f" % (L[i+1] - L[i])))
+    return np.array(out) if type(L) == type(np.array([0])) else out
+
+def myprint(L):
+    flag = 1 if str(L[0])[0] != '-' else -1
+    for i in L:
+        new_flag = 1 if str(i)[0] != '-' else -1
+        if new_flag != flag:
+            print ("\n%6.3f" % i, end=" ")
+            flag = new_flag
+        else:
+            print ("%6.3f" % i, end=" ")
+    print ("")
 
 def plot_prune(log_file):
     lines = [l.strip() for l in open(log_file)]
-    prune_num = {}
-    lspeed = []
-    prune_complete_time = {}
-    update_prob_time = {}
-    recover_prob_time = {}
+    pruned_ratio = {}
+    learn_speed  = []
+    time_prune_finish = {}
     
     for i in range(len(lines)):
         layer_name = lines[i].split("  ")[0]
-        if "pruned_ratio" in lines[i]:
-            if layer_name in prune_num.keys():
+        if "pruned_ratio" in lines[i] and not("prune finish" in lines[i]):
+            if layer_name in pruned_ratio.keys():
                 k = 1; 
                 while(not ("Step" in lines[i-k])): 
                     k = k + 1
-                prune_num[layer_name].append([int(lines[i-k].split(" ")[2]), float(lines[i].split("pruned_ratio:")[1].split("prune_ratio")[0].strip())]) ## [step, num_pruned_column]
+                pruned_ratio[layer_name].append([int(lines[i-k].split(" ")[2]), float(lines[i].split("pruned_ratio:")[1].split("prune_ratio")[0].strip())]) ## [step, prune_ratio]
             else:    
                 t = 1
                 while(not ("Step" in lines[i-t])):
                     t = t + 1
-                prune_num[layer_name] = [[int(lines[i-t].split(" ")[2]), float(lines[i].split("pruned_ratio:")[1].split("prune_ratio")[0].strip())]]
+                pruned_ratio[layer_name] = [[int(lines[i-t].split(" ")[2]), float(lines[i].split("pruned_ratio:")[1].split("prune_ratio")[0].strip())]]
                 
         elif "learning_speed" in lines[i]:
             t = 1
             while(not ("Step" in lines[i-t])):
                 t = t + 1
-            lspeed.append([int(lines[i-t].split(" ")[2]), float(lines[i].split(" ")[-1])])
-            
-        elif "update" in lines[i]:
-            if lines[i].split(" ")[-3] in update_prob_time.keys():
-                update_prob_time[lines[i].split(" ")[-3]].append(int(lines[i].split(" ")[-1])) 
-            else:    
-                update_prob_time[lines[i].split(" ")[-3]] = [int(lines[i].split(" ")[-1])]
-                
-        elif "recover" in lines[i]:
-            if lines[i].split(" ")[-3] in recover_prob_time.keys():
-                recover_prob_time[lines[i].split(" ")[-3]].append(int(lines[i].split(" ")[-1])) 
-            else:
-                recover_prob_time[lines[i].split(" ")[-3]] = [int(lines[i].split(" ")[-1])]
+            learn_speed.append([int(lines[i-t].split(" ")[2]), float(lines[i].split(" ")[-1])])
 
-        elif lines[i][:3] == "last":
-            if layer_name in prune_complete_time.keys():
+        elif "prune finish" in lines[i].split("  ")[0]:
+            layer_name = lines[i].split(" ")[0]            
+            if layer_name in time_prune_finish.keys():
                 k = 1
                 while(not ("Step" in lines[i-k])): 
                     k = k + 1
-                prune_complete_time[layer_name].append(int(lines[i-k].split(" ")[2])) 
+                time_prune_finish[layer_name].append(int(lines[i-k].split(" ")[2])) 
             else:    
                 t = 1
                 while(not ("Step" in lines[i-t])):
                     t = t + 1
-                prune_complete_time[layer_name] = [int(lines[i-t].split(" ")[2])]
+                time_prune_finish[layer_name] = [int(lines[i-t].split(" ")[2])]
             
+    np.save(log_file.split(".txt")[0]+".npy", pruned_ratio)
 
-    ## Calcute pruning ratio and save
-    prune_ratio = {}
-    for layer, num in prune_num.items():
-        num = np.array(num)
-        prune_ratio[layer] = num[:,1] * 1.0 / col_num[net][int(layer[0])] ## TODO: replace layer[4]
-    ratios = np.array([num[:,0], prune_ratio]) 
-    np.save(log_file.split(".txt")[0]+".npy", ratios)
     
 
-    plt.subplot(2,1,1)
-    ## Plot Pruning Number
-    for layer, num in prune_num.items():
-        num = np.array(num)
-        plt.plot(num[:,0], num[:,1], "-", color = color_set[int(layer[0])], label = layer)
+    ##plt.subplot(2,1,1)
+    # Plot Pruning Number
+    for layer, r in pruned_ratio.items():
+        layer_index = int(layer.split("[")[1].split("]")[0])
+        r = np.array(r)
+        plt.plot(r[:,0], r[:,1], "-", color = ColorSet[layer_index], label = layer)
     
-    ## Plot Pruning Complete Time 
-    for layer, iter in prune_complete_time.items():
-        print iter
+    # Plot Pruning Complete Time 
+    for layer, iter in time_prune_finish.items():
+        print (iter)
         assert len(iter) == 1
-        plt.plot([iter[0], iter[0]], [0, max(total_num.values())], "-k")
+        plt.plot([iter[0], iter[0]], [0, 1], "-k")
         
         
     plt.xlabel("Step"); plt.ylabel("pruned ratio")
@@ -163,28 +225,31 @@ def plot_prune(log_file):
     plt.grid(True)
     
     ## Plot learning speed
-    plt.subplot(2,1,2)
-    lspeed = [[i[0], max(i[1],0)] for i in lspeed] ## only plot positive values
-    lspeed = np.array(lspeed[50:]) ## begin from 10, to discard some trash data
-    lspeed_undersampled = lspeed[::200,:] 
-    plt.plot(lspeed[:,0], lspeed[:,1], "-b")
-    plt.plot(lspeed_undersampled[:,0], lspeed_undersampled[:,1], "-k")
-    plt.xlabel("Step"); plt.ylabel("Learning Speed")
-    plt.grid(True)
+    # plt.subplot(2,1,2)
+    # learn_speed = [[i[0], max(i[1],0)] for i in learn_speed] ## only plot positive values
+    # learn_speed = np.array(learn_speed[50:]) ## begin from 10, to discard some trash data
+    # learn_speed_undersampled = learn_speed[::200, :] 
+    # plt.plot(learn_speed[:,0], learn_speed[:,1], "-b")
+    # plt.plot(learn_speed_undersampled[:,0], learn_speed_undersampled[:,1], "-k")
+    # plt.xlabel("Step"); plt.ylabel("Learning Speed")
+    # plt.grid(True)
     
-    output_path = log_file.split(".txt")[0] + ".png"
-    plt.savefig(output_path, dpi = 500)
-    plt.close()
+    # output_path = log_file.split(".txt")[0] + ".png"
+    # plt.savefig(output_path, dpi = 500)
+    # plt.close()
     print ("Plot pruning - done!")
     
 def plot_acc_prune(f1, f2):
     if "acc" in f2: 
         f1, f2 = f2, f1 ## f1: acc  f2: prune, they must be ".npy" file.
     val_acc = np.load(f1)
-    ratios  = np.load(f2)
+    ratio   = np.load(f2)
+    print (ratio)
     plt.plot(val_acc[:,0], val_acc[:,1], "-g", label = "validation accuracy")
-    for l, r in ratios[1].items():
-        plt.plot(ratios[0], r, "-", color = color_set[int(l[0])], label = l)
+    for layer, r in ratio.items():
+        layer_index = int(layer.split("[")[1].split("]")[0])
+        r = np.array(r)
+        plt.plot(r[:][0], r[:][1], "-", color = ColorSet[layer_index], label = layer)
     
     plt.xlabel("Step")
     plt.grid(True)
@@ -194,20 +259,38 @@ def plot_acc_prune(f1, f2):
     
     
 if __name__ == "__main__":
-    assert len(sys.argv) == 2
-    path = str(sys.argv[1]).split("/log")[0]
-    timestamp = str(sys.argv[1]).split("/log")[1].split("_")[1]
-    print ("Timestamp is: " + timestamp)
-    files = [os.path.join(path, i) for i in os.listdir(path) if timestamp in i and os.path.splitext(i)[1] == ".txt"]
-    files.sort() ## sort to make sure plot acc first
-    for f in files: ## files must use complete path! 
-        if "log" in f and "acc" in f:
-            plot_acc(f)
-        elif "log" in f and "prune" in f:
-            plot_prune(f)
-        else:
-            print ("Wrong! No function to deal with '%s'" % f)
-    files = [os.path.join(path, i) for i in os.listdir(path) if timestamp in i and os.path.splitext(i)[1] == ".npy"]
-    if len(files) == 2:
-        plot_acc_prune(files[0], files[1])
+    for f in sys.argv[1:]:
+        timeID = f.split(os.sep)[-1].split("_")[1]
+        plot_acc(f, timeID)
+    plt.grid(True)
+    plt.legend()
+    plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
+    plt.savefig(f.split(".txt")[0] + ".pdf")
+    plt.close()
+    print ("Plot accuracy and loss - done!")
+
+    # path = str(sys.argv[1]).split("/log")[0]
+    # timestamp = str(sys.argv[1]).split("/log")[1].split("_")[1]
+    # print ("time stamp is: " + timestamp)
+    # files = [os.path.join(path, i) for i in os.listdir(path) if timestamp in i and os.path.splitext(i)[1] == ".txt"]
+    # files.sort() ## sort to make sure plot acc first
+
+    # for f in files:
+        # if "log" in f and "acc" in f:
+            # plot_acc(f)
+            # plt.grid(True)
+            # plt.legend()
+            # plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
+            # plt.savefig(f.split(".txt")[0] + ".png", dpi = 500)
+            # plt.close()
+            # print ("Plot accuracy and loss - done!")
+    
+        # elif "log" in f and "prune" in f:
+            # # plot_prune(f)
+            # pass
+        # else:
+            # print ("Wrong! No function to deal with '%s'" % f)
+    # files = [os.path.join(path, i) for i in os.listdir(path) if timestamp in i and os.path.splitext(i)[1] == ".npy"]
+    # if len(files) == 2:
+        # plot_acc_prune(files[0], files[1])
     

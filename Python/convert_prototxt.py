@@ -59,7 +59,7 @@ def add_param(protofile, prune_ratios, deltas):
                 layer_index = lines[i+t].split('"')[1].split("[")[1].split("]")[0]
             
             # got layer_index
-            delta = '0'
+            delta = '0.1'
             if layer_index in layer_pratio.keys():
                 pratio = layer_pratio[layer_index]
                 # add prune_ratio just before convolution_param{...}
