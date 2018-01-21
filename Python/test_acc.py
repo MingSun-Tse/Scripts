@@ -11,10 +11,18 @@ import argparse
 import shutil
 import time
 
+# set caffe
 caffe_root1 = "/home2/wanghuan/Caffe/Caffe_default/"
 caffe_root2 = "/home/wanghuan/Caffe/Caffe_default/"
-sys.path.insert(0, os.path.join(caffe_root1, 'python'))
-sys.path.insert(0, os.path.join(caffe_root2, 'python'))
+if os.path.isdir(caffe_root1):
+    caffe_root = caffe_root1
+elif os.path.isdir(caffe_root2):
+    caffe_root = caffe_root2
+else:
+    print ("caffe_root doesn't exist, please check.")
+    exit(1)
+print ("using caffe @ '%s'" % caffe_root)
+sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
 from util import get_free_gpu, get_test_batch_size, get_netproto, get_lr, my_move
        
@@ -48,7 +56,9 @@ class Tester():
         
 
     def test(self):
-        iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i and "retrain" in i]
+        IF_has_retrain = sum(["retrain" in i for i in os.listdir(self.weight_dir) if ".caffemodel" in  i]) > 0 # if has "retrain", only eval "retrain" cafffemodel's acc
+        name_mark = "retrain" if IF_has_retrain else "e" # use 'e' because 'caffemodel' and 'solverstate' both have 'e'
+        iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i and name_mark in i]
         iters.sort()
         
         # For tested caffemodels, move them to `tested_weights`
@@ -60,8 +70,8 @@ class Tester():
             acc_file = os.path.join(self.weight_dir, "val_accuracy.txt")
             fp = open(acc_file, "a+")
             
-            weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "caffemodel"  in i and str(iter) in i and "retrain" in i][0]
-            solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "solverstate" in i and str(iter) in i and "retrain" in i]
+            weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "caffemodel"  in i and str(iter) in i and name_mark in i][0]
+            solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "solverstate" in i and str(iter) in i and name_mark in i]
             solverstate  = solverstates[0] if len(solverstates) else None
             acc = self.test_one(weights)
             
