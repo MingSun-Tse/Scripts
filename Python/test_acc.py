@@ -11,8 +11,10 @@ import argparse
 import shutil
 import time
 
-caffe_root = "/home2/wanghuan/Caffe/Caffe_default/"
-sys.path.insert(0, os.path.join(caffe_root, 'python'))
+caffe_root1 = "/home2/wanghuan/Caffe/Caffe_default/"
+caffe_root2 = "/home/wanghuan/Caffe/Caffe_default/"
+sys.path.insert(0, os.path.join(caffe_root1, 'python'))
+sys.path.insert(0, os.path.join(caffe_root2, 'python'))
 import caffe as c
 from util import get_free_gpu, get_test_batch_size, get_netproto, get_lr, my_move
        
