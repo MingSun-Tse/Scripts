@@ -11,8 +11,8 @@ import argparse
 import shutil
 import time
 
-caffe_root = "/home/wanghuan/Caffe/Caffe_APP/"
-sys.path.insert(0, caffe_root + 'python')
+caffe_root = "/home2/wanghuan/Caffe/Caffe_default/"
+sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
 from util import get_free_gpu, get_test_batch_size, get_netproto, get_lr, my_move
        
@@ -46,7 +46,7 @@ class Tester():
         
 
     def test(self):
-        iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i]
+        iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i and "retrain" in i]
         iters.sort()
         
         # For tested caffemodels, move them to `tested_weights`
@@ -58,8 +58,8 @@ class Tester():
             acc_file = os.path.join(self.weight_dir, "val_accuracy.txt")
             fp = open(acc_file, "a+")
             
-            weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "caffemodel"  in i and str(iter) in i][0]
-            solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "solverstate" in i and str(iter) in i]
+            weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "caffemodel"  in i and str(iter) in i and "retrain" in i][0]
+            solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "solverstate" in i and str(iter) in i and "retrain" in i]
             solverstate  = solverstates[0] if len(solverstates) else None
             acc = self.test_one(weights)
             

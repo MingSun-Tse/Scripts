@@ -1,48 +1,62 @@
-Here is `StartInternalThread` in parallel.cpp
-Here is `is_started` in parallel.cpp
-0
-Here is `is_started` in parallel.cpp
-Here is 01 in parallel.cpp
-Here is `StartInternalThread` in parallel.cpp
-Here is `is_started` in parallel.cpp
-0
-Here is `is_started` in parallel.cpp
-Here is 01 in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `StartInternalThread` in parallel.cpp
-Here is `is_started` in parallel.cpp
-0
-Here is `is_started` in parallel.cpp
-Here is 01 in parallel.cpp
-Here is `StartInternalThread` in parallel.cpp
-Here is `is_started` in parallel.cpp
-0
-Here is `is_started` in parallel.cpp
-Here is 01 in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `StartInternalThread` in parallel.cpp
-Here is `is_started` in parallel.cpp
-0
-Here is `is_started` in parallel.cpp
-Here is 01 in parallel.cpp
-Here is `StartInternalThread` in parallel.cpp
-Here is `is_started` in parallel.cpp
-0
-Here is `is_started` in parallel.cpp
-Here is 01 in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
-Here is `is_started` in parallel.cpp
 test_iter is: 1000
-acurracy: 0.677159  0.880342
+acurracy: 0.663679  0.873841
 test_iter is: 1000
-acurracy: 0.676039  0.880602
+acurracy: 0.683679  0.884922
 test_iter is: 1000
-acurracy: 0.674039  0.879261
+acurracy: 0.688099  0.889282
+test_iter is: 1000
+acurracy: 0.69058  0.887982
+test_iter is: 1000
+acurracy: 0.6916  0.889382
+test_iter is: 1000
+acurracy: 0.689  0.888462
+test_iter is: 1000
+acurracy: 0.693019  0.890502
+test_iter is: 1000
+acurracy: 0.69314  0.891482
+test_iter is: 1000
+acurracy: 0.69384  0.890941
+test_iter is: 1000
+acurracy: 0.6915  0.890062
+test_iter is: 1000
+acurracy: 0.693039  0.889421
+test_iter is: 1000
+acurracy: 0.69396  0.890902
+test_iter is: 1000
+acurracy: 0.6936  0.891682
+test_iter is: 1000
+acurracy: 0.69528  0.890662
+test_iter is: 1000
+acurracy: 0.693059  0.889282
+test_iter is: 1000
+acurracy: 0.7003  0.896001
+test_iter is: 1000
+acurracy: 0.70034  0.895642
+test_iter is: 1000
+acurracy: 0.700199  0.895802
+test_iter is: 1000
+acurracy: 0.699739  0.895602
+test_iter is: 1000
+acurracy: 0.70038  0.895562
+test_iter is: 1000
+acurracy: 0.70052  0.895862
+test_iter is: 1000
+acurracy: 0.70108  0.895262
+test_iter is: 1000
+acurracy: 0.7006  0.895742
+test_iter is: 1000
+acurracy: 0.700219  0.895762
+test_iter is: 1000
+acurracy: 0.70012  0.895502
+test_iter is: 1000
+acurracy: 0.70052  0.895362
+test_iter is: 1000
+acurracy: 0.70072  0.895501
+test_iter is: 1000
+acurracy: 0.701119  0.895402
+test_iter is: 1000
+acurracy: 0.70074  0.895702
+test_iter is: 1000
+acurracy: 0.70072  0.895682
+test_iter is: 1000
+acurracy: 0.70134  0.895762

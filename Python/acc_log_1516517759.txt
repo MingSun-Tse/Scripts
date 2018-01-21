@@ -1,0 +1,2 @@
+I0121 14:55:59.055836  7386 caffe.cpp:270] Use GPU with device ID 1
+I0121 14:55:59.072116  7386 caffe.cpp:274] GPU device name: GeForce GTX 1080 Ti
