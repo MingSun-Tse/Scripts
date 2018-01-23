@@ -79,7 +79,7 @@ def plot_acc(log_file, ID):
         
         ## smoothed train loss
         if "Iteration" in lines[i] and "loss = " in lines[i]: 
-            train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1])])
+            train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(", smoothed loss")[0]),  float(lines[i].split("loss = ")[-1].split(",")[0])])
 
             
     ## Converted to np array for convenience
@@ -100,20 +100,21 @@ def plot_acc(log_file, ID):
         min_acc = min(acc5[:, 1]) # the min acc during this lr
         ave_acc = np.average(acc5[:, 1]) # the average acc during this lr
         print ("lr = {:7.5f}({}):  {:7.5f} - {:7.5f} - {:7.5f}".format(lr, iter_begin, min_acc, max_acc, ave_acc))
-
-    max_acc5 = float(("%4.10f" % max(val_acc5[:,1]))[:4]) # use `.10f`, in order not to round
-    min_acc5 = float(("%4.10f" % min(val_acc5[:,1]))[:4])
-    step = 0.01
-    sep = "   "
-    print ("acc_min", end=sep)
-    for acc5 in np.arange(min_acc5, max_acc5, step):
-        print ("%4.2f+" % acc5, end=sep)
-    print ("acc_max")
-    print ("%7.5f" % min(val_acc5[:,1]), end=sep)
-    for acc5 in np.arange(min_acc5, max_acc5, step):
-        num = len(np.where(np.logical_and(val_acc5[:,1]>=acc5,  val_acc5[:,1]<acc5+step))[0])
-        print ("%5d" % num, end=sep)
-    print ("%7.5f" % max(val_acc5[:,1]))
+    
+    if (len(val_acc5)):
+        max_acc5 = float(("%4.10f" % max(val_acc5[:,1]))[:4]) # use `.10f`, in order not to round
+        min_acc5 = float(("%4.10f" % min(val_acc5[:,1]))[:4])
+        step = 0.01
+        sep = "   "
+        print ("acc_min", end=sep)
+        for acc5 in np.arange(min_acc5, max_acc5, step):
+            print ("%4.2f+" % acc5, end=sep)
+        print ("acc_max")
+        print ("%7.5f" % min(val_acc5[:,1]), end=sep)
+        for acc5 in np.arange(min_acc5, max_acc5, step):
+            num = len(np.where(np.logical_and(val_acc5[:,1]>=acc5,  val_acc5[:,1]<acc5+step))[0])
+            print ("%5d" % num, end=sep)
+        print ("%7.5f" % max(val_acc5[:,1]))
 
     
     ## Plot loss
@@ -200,7 +201,7 @@ def plot_prune(log_file):
                 t = 1
                 while(not ("Step" in lines[i-t])):
                     t = t + 1
-                time_prune_finish[layer_name] = [int(lines[i-t].split(" ")[2])]
+                time_prune_finish[layer_name] = [int(lines[i-t].split(" ")[2].split(":")[0])]
             
     np.save(log_file.split(".txt")[0]+".npy", pruned_ratio)
 
@@ -259,38 +260,39 @@ def plot_acc_prune(f1, f2):
     
     
 if __name__ == "__main__":
-    for f in sys.argv[1:]:
-        timeID = f.split(os.sep)[-1].split("_")[1]
-        plot_acc(f, timeID)
-    plt.grid(True)
-    plt.legend()
-    plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
-    plt.savefig(f.split(".txt")[0] + ".pdf")
-    plt.close()
-    print ("Plot accuracy and loss - done!")
 
-    # path = str(sys.argv[1]).split("/log")[0]
-    # timestamp = str(sys.argv[1]).split("/log")[1].split("_")[1]
-    # print ("time stamp is: " + timestamp)
-    # files = [os.path.join(path, i) for i in os.listdir(path) if timestamp in i and os.path.splitext(i)[1] == ".txt"]
-    # files.sort() ## sort to make sure plot acc first
+    # for f in sys.argv[1:]:
+        # timeID = f.split(os.sep)[-1].split("_")[1]
+        # plot_acc(f, timeID)
+    # plt.grid(True)
+    # plt.legend()
+    # plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
+    # plt.savefig(f.split(".txt")[0] + ".pdf")
+    # plt.close()
+    # print ("Plot accuracy and loss - done!")
 
-    # for f in files:
-        # if "log" in f and "acc" in f:
-            # plot_acc(f)
-            # plt.grid(True)
-            # plt.legend()
-            # plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
-            # plt.savefig(f.split(".txt")[0] + ".png", dpi = 500)
-            # plt.close()
-            # print ("Plot accuracy and loss - done!")
+    path = str(sys.argv[1]).split("/log")[0]
+    timeID = str(sys.argv[1]).split("/log")[1].split("_")[1]
+    print ("time stamp is: " + timeID)
+    files = [os.path.join(path, i) for i in os.listdir(path) if timeID in i and os.path.splitext(i)[1] == ".txt"]
+    files.sort() ## sort to make sure plot acc first
+
+    for f in files:
+        if "log" in f and "acc" in f:
+            plot_acc(f, timeID)
+            plt.grid(True)
+            plt.legend()
+            plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
+            plt.savefig(f.split(".txt")[0] + ".png", dpi = 500)
+            plt.close()
+            print ("Plot accuracy and loss - done!")
     
-        # elif "log" in f and "prune" in f:
-            # # plot_prune(f)
-            # pass
-        # else:
-            # print ("Wrong! No function to deal with '%s'" % f)
-    # files = [os.path.join(path, i) for i in os.listdir(path) if timestamp in i and os.path.splitext(i)[1] == ".npy"]
-    # if len(files) == 2:
-        # plot_acc_prune(files[0], files[1])
+        elif "log" in f and "prune" in f:
+            plot_prune(f)
+            
+        else:
+            print ("Wrong! No function to deal with '%s'" % f)
+    files = [os.path.join(path, i) for i in os.listdir(path) if timeID in i and os.path.splitext(i)[1] == ".npy"]
+    if len(files) == 2:
+        plot_acc_prune(files[0], files[1])
     
