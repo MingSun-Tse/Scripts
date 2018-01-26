@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os
+import pickle
 
 '''Usage
 python  this_file.py  ***prune.txt
@@ -33,6 +34,14 @@ for line in open(pruned_ratio_log_file):
     else:
         layers[layer] = [[pruned_ratio, pruned_ratio_row, pruned_ratio_col]]
 
+# save for future use
+# output_pkl = pruned_ratio_log_file.replace(".log", ".pkl")
+# with open(output_pkl, 'w') as f:
+    # pickle.dumps(layers, f)
+for layer in layers.keys():
+    np.save(pruned_ratio_log_file.replace(".log", "_"+layer+".npy"), layers[layer])
+
+    
 items = ["pruned_ratio"]
 layers_ = sorted(layers.keys())
 for ix in range(len(items)):
