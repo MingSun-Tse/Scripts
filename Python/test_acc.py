@@ -13,7 +13,7 @@ import time
 
 # set caffe
 caffe_root1 = "/home2/wanghuan/Caffe/Caffe_default/"
-caffe_root2 = "/home/wanghuan/Caffe/Caffe_default/"
+caffe_root2 = "/home/wanghuan/Caffe/Caffe_APP/"
 if os.path.isdir(caffe_root1):
     caffe_root = caffe_root1
 elif os.path.isdir(caffe_root2):

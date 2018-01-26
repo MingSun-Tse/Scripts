@@ -136,7 +136,7 @@ def plot_acc(log_file, ID):
             plt.plot(val_acc5[:,0], smoothed_val_acc5, "-", color=ColorSet[CntPlot%len(ColorSet)], label="%s_val_acc5"%ID); CntPlot += 1
             
 def smooth(L, window = 50):
-    print ("call smooth, window = ", window)
+    # print ("call smooth, window = ", window)
     out = []
     num = len(L)
     for i in range(num):
@@ -258,41 +258,50 @@ def plot_acc_prune(f1, f2):
     plt.savefig(f1.split("_acc.npy")[0] + "_acc_prune.png", dpi = 500)
     print ("Plot pruning && acc - done!")
     
+
+def compare_acc_trajectory(accFiles):
+    for f in accFiles:
+        timeID = f.split(os.sep)[-1].split("_")[1]
+        if not os.path.exists(f):
+            f = os.path.join(os.path.split(accFiles[0])[0], f) # if accFiles are in the same dir, only the first needs to provide dir path
+        plot_acc(f, timeID)
+    plt.grid(True)
+    plt.legend()
+    plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
+    plt.savefig(f.split(".txt")[0] + ".png", dpi=200)
+    plt.close()
+    print ("Plot accuracy - done!")
     
 if __name__ == "__main__":
+    '''Usage:
+        (1) compare acc or see if get acc plateau: 
+            `python  this_file.py  **/weights/log_192-20180123-1608_retrain_acc.txt  **/weights/log_192-20180123-1632_retrain_acc.txt`
+            `python  this_file.py  **/weights/log_192-20180123-1608_retrain_acc.txt             log_192-20180123-1632_retrain_acc.txt`
+        (2) 
+    '''
+    compare_acc_trajectory(sys.argv[1:])
+    # path = str(sys.argv[1]).split("/log")[0]
+    # timeID = str(sys.argv[1]).split("/log")[1].split("_")[1]
+    # print ("time stamp is: " + timeID)
+    # files = [os.path.join(path, i) for i in os.listdir(path) if timeID in i and os.path.splitext(i)[1] == ".txt"]
+    # files.sort() ## sort to make sure plot acc first
 
-    # for f in sys.argv[1:]:
-        # timeID = f.split(os.sep)[-1].split("_")[1]
-        # plot_acc(f, timeID)
-    # plt.grid(True)
-    # plt.legend()
-    # plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
-    # plt.savefig(f.split(".txt")[0] + ".pdf")
-    # plt.close()
-    # print ("Plot accuracy and loss - done!")
-
-    path = str(sys.argv[1]).split("/log")[0]
-    timeID = str(sys.argv[1]).split("/log")[1].split("_")[1]
-    print ("time stamp is: " + timeID)
-    files = [os.path.join(path, i) for i in os.listdir(path) if timeID in i and os.path.splitext(i)[1] == ".txt"]
-    files.sort() ## sort to make sure plot acc first
-
-    for f in files:
-        if "log" in f and "acc" in f:
-            plot_acc(f, timeID)
-            plt.grid(True)
-            plt.legend()
-            plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
-            plt.savefig(f.split(".txt")[0] + ".png", dpi = 500)
-            plt.close()
-            print ("Plot accuracy and loss - done!")
+    # for f in files:
+        # if "log" in f and "acc" in f:
+            # plot_acc(f, timeID)
+            # plt.grid(True)
+            # plt.legend()
+            # plt.xlabel("Step"); plt.ylabel("Accuracy and Loss")
+            # plt.savefig(f.split(".txt")[0] + ".png", dpi = 500)
+            # plt.close()
+            # print ("Plot accuracy and loss - done!")
     
-        elif "log" in f and "prune" in f:
-            plot_prune(f)
+        # elif "log" in f and "prune" in f:
+            # plot_prune(f)
             
-        else:
-            print ("Wrong! No function to deal with '%s'" % f)
-    files = [os.path.join(path, i) for i in os.listdir(path) if timeID in i and os.path.splitext(i)[1] == ".npy"]
-    if len(files) == 2:
-        plot_acc_prune(files[0], files[1])
+        # else:
+            # print ("Wrong! No function to deal with '%s'" % f)
+    # files = [os.path.join(path, i) for i in os.listdir(path) if timeID in i and os.path.splitext(i)[1] == ".npy"]
+    # if len(files) == 2:
+        # plot_acc_prune(files[0], files[1])
     
