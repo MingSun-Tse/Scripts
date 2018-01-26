@@ -9,7 +9,7 @@ import argparse
 import copy
 import cPickle as pickle
 
-caffe_root = "/home/wanghuan/Caffe/Caffe_default/"
+caffe_root = "/home2/wanghuan/Caffe/Caffe_default/"
 #caffe_root="/home/wanghuan/Caffe/Caffe_APP/"
 sys.path.insert(0, caffe_root + 'python')
 import caffe as c

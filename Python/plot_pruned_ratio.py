@@ -16,6 +16,7 @@ inFile = sys.argv[1]
 inFile = os.path.abspath(inFile)
 
 # if directory provided
+IF_dir = False
 if os.path.isdir(inFile):
     IF_dir = True
     prune_txts = [os.path.join(inFile, i) for i in os.listdir(inFile) if i.endswith("prune.txt")]
