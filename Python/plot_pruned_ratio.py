@@ -27,7 +27,7 @@ if os.path.isdir(inFile):
 output_path = sys.argv[1] if IF_dir else os.sep + os.path.join(*inFile.split(os.sep)[:-1])
 timeID = inFile.split("log_")[1].split("_")[0]
 
-# cat
+# cat to get pruned_ratio
 pruned_ratio_log_file = inFile.replace("_prune.txt", "_pruned_ratio.log")
 script = "cat " + inFile + "| grep 'IF_prune' > " + pruned_ratio_log_file
 print (script)
@@ -36,6 +36,25 @@ if not open(pruned_ratio_log_file).readline():
     script = "cat " + inFile + "| grep 'IF_mask' > " + pruned_ratio_log_file
     print (script)
     os.system(script)
+
+# cat to get speedup
+home = os.environ["HOME"]
+script2 = "python {0}/Scripts/Python/log.py  {1}  step".format(home, inFile)
+os.system(script2)
+
+# plot speedup
+speedup = []
+for line in open(inFile.replace("_prune.txt", "_Step.txt")):
+    step = int(line.split("Step ")[1].split(":")[0])
+    speedup_ = float(line.split(": ")[1].split("/")[0])
+    speedup.append([step, speedup_])
+speedup = np.array(speedup)
+plt.plot(speedup[:, 0], speedup[:, 1])
+plt.title(timeID)
+plt.grid(1)
+plt.xlabel("Iteration"); plt.ylabel("Speedup")
+plt.savefig(inFile.replace("_prune.txt", "_speedup.pdf"))
+plt.close()
 
 # read and parsing
 layers = {}
