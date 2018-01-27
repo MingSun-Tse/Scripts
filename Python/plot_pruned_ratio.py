@@ -42,8 +42,8 @@ layers = {}
 for line in open(pruned_ratio_log_file):
     layer = line.split("  ")[0]
     pruned_ratio     = float(line.split("  ")[2].split(" ")[1])
-    pruned_ratio_row = float(line.split("  ")[3].split(" ")[1].split("(")[0])
-    pruned_ratio_col = float(line.split("  ")[4].split(" ")[1].split("(")[0])
+    pruned_ratio_row = float(line.split("  ")[3].split(" ")[1].split("(")[0]) if "pruned_ratio_row" in line else 0
+    pruned_ratio_col = float(line.split("  ")[4].split(" ")[1].split("(")[0]) if "pruned_ratio_col" in line else 0
     
     if layer in layers.keys():
         layers[layer].append([pruned_ratio, pruned_ratio_row, pruned_ratio_col])
