@@ -19,20 +19,21 @@ inFile = os.path.abspath(inFile)
 IF_dir = False
 if os.path.isdir(inFile):
     IF_dir = True
-    prune_txts = [os.path.join(inFile, i) for i in os.listdir(inFile) if i.endswith("prune.txt")]
+    prune_txts = [os.path.join(inFile, i) for i in os.listdir(inFile) if i.endswith("prune.txt") and "retrain" not in i]
     if len(prune_txts) != 1:
         print ("there are not 1 `prune.txt` in your provided directory, please check.")
         exit(1)
     inFile = prune_txts[0]
 output_path = sys.argv[1] if IF_dir else os.sep + os.path.join(*inFile.split(os.sep)[:-1])
+timeID = inFile.split("log_")[1].split("_")[0]
 
 # cat
 pruned_ratio_log_file = inFile.replace("_prune.txt", "_pruned_ratio.log")
-script = "cat " + inFile + "| grep 'IF_mask' | grep 'conv' > " + pruned_ratio_log_file
+script = "cat " + inFile + "| grep 'IF_prune' > " + pruned_ratio_log_file
 print (script)
 os.system(script)
 if not open(pruned_ratio_log_file).readline():
-    script = "cat " + inFile + "| grep 'IF_prune' | grep 'conv' > " + pruned_ratio_log_file
+    script = "cat " + inFile + "| grep 'IF_mask' > " + pruned_ratio_log_file
     print (script)
     os.system(script)
 
@@ -61,7 +62,7 @@ for ix in range(len(items)):
         p = np.array(layers[layer])
         plt.plot(p[:,ix], label = items[ix]+"-"+layer)
 
-plt.title("pruned_ratio of different layers during pruning")
+plt.title(timeID)
 plt.legend()
 plt.savefig(pruned_ratio_log_file.replace(".log", ".pdf"))
 plt.close()
