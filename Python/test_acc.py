@@ -73,6 +73,7 @@ class Tester():
             weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "caffemodel"  in i and str(iter) in i and name_mark in i][0]
             solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "solverstate" in i and str(iter) in i and name_mark in i]
             solverstate  = solverstates[0] if len(solverstates) else None
+            print (weights.split(os.sep)[-1])
             acc = self.test_one(weights)
             
             lr = get_lr(self.acc_log, iter)

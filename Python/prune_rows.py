@@ -5,6 +5,7 @@ import numpy as np
 caffe_root = "/home/wanghuan/Caffe/Caffe_default"
 sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
+import pickle 
         
 def prune_rows(model, weights):
     FLAG = c.TRAIN if "train" in model else c.TEST
@@ -16,6 +17,7 @@ def prune_rows(model, weights):
     
     for layer, param in net2.params.iteritems():
         w = param[0].data
+        if len(w.shape) != 4: continue
         layers.append(layer)
         ws.append(w[:])
         pruned_rows[layer] = []
@@ -26,6 +28,9 @@ def prune_rows(model, weights):
         colsum_abs = np.sum(w_abs, axis = 0)
         pruned_cols[layer] = list(np.where(colsum_abs == 0)[0])
         print ("{}: {} columns ({}) are pruned".format(layer, len(pruned_cols[layer]), len(pruned_cols[layer])*1.0/w.shape[1]))
+        np.savetxt(weights.replace(".caffemodel", "_pruned_cols_%s.txt" % layer), pruned_cols[layer], fmt = "%d", delimiter = " ")
+    with open(weights.replace(".caffemodel", "_pruned_cols.pkl"), 'w') as f:
+        pickle.dump(pruned_cols, f)
         
     
     for l in range(len(layers) - 1): # l: the layer index of conv layers

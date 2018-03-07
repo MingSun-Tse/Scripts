@@ -3,14 +3,19 @@ import os
 import sys
 import shutil
 import numpy as np
+home = os.environ["HOME"]
+caffe_root = home + "/Caffe/Caffe_default/python"
+print (caffe_root)
+sys.path.insert(0, caffe_root)
 
 def my_move(file, dir):
-    if os.path.isfile(file):
-        f = os.path.split(file)[-1]
-        if os.path.isfile(os.path.join(dir, f)):
-            os.remove(os.path.join(dir, f))
-        shutil.move(file, dir)
-    
+    if type(file) == type(dir) == type("string"):
+        if os.path.exists(file) and os.path.exists(dir):
+            f = os.path.split(file)[-1]
+            if os.path.exists(os.path.join(dir, f)):
+                os.remove(os.path.join(dir, f))
+            shutil.move(file, dir)
+
   
 def get_free_gpu():
     os.system("nvidia-smi > smi_log.txt")

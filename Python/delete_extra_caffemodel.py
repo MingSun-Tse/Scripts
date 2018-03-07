@@ -1,3 +1,15 @@
+'''Usage:
+The saved caffemodel/solverstate should be at the interval of 1000. Namely, a caffemodel is saved every 1000 iterations. Any iterations which as not multiples of 1000 won't be deleted naturally.
+
+argvs:
+	argv 1, <dir>, is the directory to clean.
+	<iter_not_del> are the iterations which won't be deleted.
+	argv -1, bool value, is to indicate whether to delete all the other iterations except the ones in <iter_not_del>
+
+Examples:
+	python  this_file.py  <dir>  2000 150000 0
+	python  this_file.py  <dir>  2000 150000 1
+'''
 import os
 import sys
 Dir = sys.argv[1]
