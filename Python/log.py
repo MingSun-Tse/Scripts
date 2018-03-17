@@ -35,4 +35,3 @@ elif 'hrank' in sys.argv[2]:
     
 elif 'rank' in sys.argv[2]:
     os.system('cat %s | grep "%s" > %s' % (sys.argv[1], sys.argv[2], sys.argv[1].replace('_prune.txt', '_' + sys.argv[2] + '.txt')))
-
