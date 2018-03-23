@@ -60,6 +60,7 @@ class Tester():
         name_mark = "retrain" if IF_has_retrain else "e" # use 'e' because 'caffemodel' and 'solverstate' both have 'e'
         iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i and name_mark in i]
         iters.sort()
+        print("all the caffemodels:\n", iters)
         
         # For tested caffemodels, move them to `tested_weights`
         tested_weight_dir = os.path.join(self.weight_dir, "tested_weights")
@@ -67,11 +68,12 @@ class Tester():
             os.makedirs(tested_weight_dir)
       
         for iter in iters:
+            print ("dealing with iter %s's caffemodel:" % iter, sep=" ")
             acc_file = os.path.join(self.weight_dir, "val_accuracy.txt")
             fp = open(acc_file, "a+")
             
-            weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "caffemodel"  in i and str(iter) in i and name_mark in i][0]
-            solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "solverstate" in i and str(iter) in i and name_mark in i]
+            weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "_iter_"+str(iter)+".caffemodel"  in i and name_mark in i][0]
+            solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "_iter_"+str(iter)+".solverstate" in i and name_mark in i]
             solverstate  = solverstates[0] if len(solverstates) else None
             print (weights.split(os.sep)[-1])
             acc = self.test_one(weights)
