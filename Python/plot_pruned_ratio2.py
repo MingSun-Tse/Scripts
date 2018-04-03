@@ -17,7 +17,7 @@ inFile = os.path.abspath(inFile)
 # cat
 pruned_ratio_log_file = inFile.replace("_prune.txt", "_pruned_ratio.log")
 output_path = os.sep + os.path.join(*inFile.split(os.sep)[:-1])
-script = "cat " + inFile + "| grep 'IF_prune' | grep 'conv' > " + pruned_ratio_log_file
+script = "cat " + inFile + "| grep 'IF_prune' | grep 'fc' > " + pruned_ratio_log_file
 print (script)
 os.system(script)
 

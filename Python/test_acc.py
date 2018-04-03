@@ -40,17 +40,21 @@ class Tester():
         test_iter = int(np.ceil(float(self.num_test_example) / self.test_batch))
         print ("test_iter is:", test_iter)
         tt = int(time.time())
+	out_log = "acc_log_%s_%s.txt" % (tt, weights.replace(os.sep, "_"))
+	if out_log in os.listdir("."):
+	    print("Wrong: naming conflict, there is already an accuracy log file named `%s` in the current directory." % out_log)
+	    exit(1)
         script = "".join([caffe_root, "/build/tools/caffe test",
                                       " -model ", self.model,
                                       " -weights ", weights, 
                                       " -gpu ", self.gpu_id,
                                       " -iterations ", str(test_iter), 
-                                      " 2> acc_log_%s.txt" % tt])  ## Now can only test one project each time, TODO improvement
+                                      " 2> ", out_log])
         os.system(script)
-        lines = open("acc_log_%s.txt" % tt).readlines()
+        lines = open(out_log).readlines()
         acc1 = lines[-3].strip().split(" ")[-1]
-        acc5 = lines[-2].strip().split(" ")[-1]
-        os.remove("acc_log_%s.txt" % tt) 
+        acc5 = lines[-2].strip().split(" ")[-1] # TODO(Ming): fix this for what has no acc5
+        os.remove(out_log) 
         print ("acurracy: " + acc1 + "  " + acc5)
         return float(acc1), float(acc5)
         
@@ -98,9 +102,9 @@ def parse_args(args):
     return parser.parse_args(args)
 
 if __name__ == "__main__":
-    '''
-        python  test_acc.py  train_val.prototxt  weight_dir  # user supplies `train_val.prototxt`
-        python  test_acc.py  weight_dir                      # automatically find `train_val.prototxt`
+    '''Usage:
+        (1) python  test_acc.py  -m train_val.prototxt  -w weight_dir -g 2 -n 10000  # user supplies `train_val.prototxt`
+        (2) python  test_acc.py  -w weight_dir                                       # automatically find `train_val.prototxt`
     '''
     args = parse_args(sys.argv[1:])
     tester = Tester(args.model, args.weight_dir, args.num_test_example, args.gpu)
