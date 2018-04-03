@@ -34,7 +34,8 @@ class Tester():
         self.num_test_example = num
         self.gpu_id           = gpu if gpu else get_free_gpu()
         self.test_batch       = get_test_batch_size(self.model)
-        self.acc_log          = os.path.join(dir, [i for i in os.listdir(dir) if "retrain_acc.txt" in i][0])
+	tmp = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
+        self.acc_log          = os.path.join(dir, tmp[0]) if len(tmp) else "doesnt_exist_hhh"
 
     def test_one(self, weights):
         test_iter = int(np.ceil(float(self.num_test_example) / self.test_batch))
@@ -81,10 +82,11 @@ class Tester():
             solverstate  = solverstates[0] if len(solverstates) else None
             print (weights.split(os.sep)[-1])
             acc = self.test_one(weights)
-            
-            lr = get_lr(self.acc_log, iter)
-            if lr != get_lr(acc_file):
-                fp.write("lr = " + lr + "\n")
+           
+	    if os.path.exists(self.acc_log):
+                lr = get_lr(self.acc_log, iter)
+                if lr != get_lr(acc_file):
+                    fp.write("lr = " + lr + "\n")
             line = weights.split(os.sep)[-1] + "  " + str(acc[0]) + "  " + str(acc[1]) + "\n"
             fp.write(line)
             fp.close()
