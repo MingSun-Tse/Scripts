@@ -10,7 +10,7 @@ import copy
 
 
 caffe_root = "/home/wanghuan/Caffe/Caffe_default/"
-#caffe_root="/home/wanghuan/Caffe/Caffe_APP/"
+#caffe_root = "/home/wanghuan/Caffe/Caffe_APP/"
 sys.path.insert(0, caffe_root + 'python')
 import caffe as c
 
@@ -220,8 +220,36 @@ def shrink_dep_layer(net_old, net_new, layer1, layer2):
         pass
             
     
+def prune_negatives_layer(net, layer):
+    IF_bias = True if len(net.params[layer]) == 2 else False
+    w = net.params[layer][0].data
+    # if len(w.shape) == 4: return net # Only prune FC layers
     
+    print(np.where(w < 0))
+    cnt_w_neg = len(np.where(w < 0)[0])
+    w[np.where(w < 0)] = 0
+    net.params[layer][0].data[:] = w[:]
+    print("num negative w:", cnt_w_neg)
     
+    if IF_bias:
+        b = net.params[layer][1].data
+        print(np.where(b < 0))
+        cnt_b_neg = len(np.where(b < 0)[0])
+        b[np.where(b < 0)] = 0
+        net.params[layer][1].data[:] = b[:]
+        print("num negative b:", cnt_b_neg)
+    return net
+
+def prune_negatives(model, weights):
+    mode = c.TRAIN if "train" in model else c.TEST
+    net = c.Net(model, weights, mode)
+    for layer, param in net.params.iteritems():
+        print("\ndealing with " + layer)
+        net = prune_negatives_layer(net, layer)
+    net.save(weights.replace(".caffemodel", "_negative_pruned.caffemodel"))
+    print("prune done")
+
+
 def make_new_caffemodel(model_old, weights_old, model_new):
     assert weights_old.endswith("caffemodel") or weights_old.endswith("caffemodel.h5")
     mode = c.TRAIN if "train" in model_old else c.TEST
@@ -293,28 +321,6 @@ def clear_zeros(model, weights):
     #compare_net(net1, net2, "conv4")
     #print ("Done.")
 
-def compare_net(net1, net2, output_layer):
-    image = "cat.png"
-    imdata = c.io.load_image(image)
-    result = []
-    transformer = c.io.Transformer({'data': net1.blobs['data'].data.shape})
-    transformer.set_transpose('data', (2, 0, 1))
-    transformed_image = transformer.preprocess('data', imdata)
-    for net in (net1, net2):
-        net.blobs["data"].data[...] = transformed_image
-        net.forward()
-        result.append(net.blobs[output_layer].data[0])
-    difference = np.abs(result[0]).sum() - np.abs(result[1]).sum()
-    print ("diff of feature map of layer %s:" % output_layer, difference)
-    
-    
-    # for layer, param in net1.params.iteritems():
-        # w1 = param[0].data
-        # w2 = net2.params[layer][0].data
-        # print ("diff of weight of layer %s:" % layer, np.abs(w1 - w2).sum())
-  
-    
-    return difference
 # ---------------------------------------------------------------------
   
 def arg_parse(args):
@@ -324,11 +330,14 @@ def arg_parse(args):
     parser.add_argument('--prune_ratio', '-P', type = float, help = 'prune_ratio', default = 0)
     parser.add_argument('--layer', '-l', type = str, help = 'layer name', default = None)
     parser.add_argument('--ABS_AVE_THRESHOLD', '-A', type = float, help = 'ABS_AVE_THRESHOLD', default = 0)
+    parser.add_argument('--function', '-f', type = str, help = "the function option of this script")
+    
     return parser.parse_args(args)
     
 def main():
- 
- 
+    args = arg_parse(sys.argv[1:])
+    if args.function == "prune_negatives":
+        prune_negatives(args.model, args.weights)
 
 if __name__ == "__main__":
     main()
