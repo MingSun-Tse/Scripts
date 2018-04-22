@@ -34,17 +34,17 @@ class Tester():
         self.num_test_example = num
         self.gpu_id           = gpu if gpu else get_free_gpu()
         self.test_batch       = get_test_batch_size(self.model)
-	tmp = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
+        tmp = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
         self.acc_log          = os.path.join(dir, tmp[0]) if len(tmp) else "doesnt_exist_hhh"
 
     def test_one(self, weights):
         test_iter = int(np.ceil(float(self.num_test_example) / self.test_batch))
         print ("test_iter is:", test_iter)
         tt = int(time.time())
-	out_log = "acc_log_%s_%s.txt" % (tt, weights.replace(os.sep, "_"))
-	if out_log in os.listdir("."):
-	    print("Wrong: naming conflict, there is already an accuracy log file named `%s` in the current directory." % out_log)
-	    exit(1)
+        out_log = "acc_log_%s_%s.txt" % (tt, weights.replace(os.sep, "_"))
+        if out_log in os.listdir("."):
+            print("Wrong: naming conflict, there is already an accuracy log file named `%s` in the current directory." % out_log)
+            exit(1)
         script = "".join([caffe_root, "/build/tools/caffe test",
                                       " -model ", self.model,
                                       " -weights ", weights, 
@@ -83,11 +83,12 @@ class Tester():
             print (weights.split(os.sep)[-1])
             acc = self.test_one(weights)
            
-	    if os.path.exists(self.acc_log):
+            if os.path.exists(self.acc_log):
                 lr = get_lr(self.acc_log, iter)
                 if lr != get_lr(acc_file):
                     fp.write("lr = " + lr + "\n")
-            line = weights.split(os.sep)[-1] + "  " + str(acc[0]) + "  " + str(acc[1]) + "\n"
+            
+            line = weights.split(os.sep)[-1] + "  " + "%7.5f" % acc[0] + "  " + "%7.5f" % acc[1] + "\n"
             fp.write(line)
             fp.close()
             my_move(weights, tested_weight_dir)
