@@ -12,13 +12,9 @@ import shutil
 import time
 
 # set caffe
-caffe_root1 = "/home2/wanghuan/Caffe/Caffe_default/"
-caffe_root2 = "/home/wanghuan/Caffe/Caffe_APP/"
-if os.path.isdir(caffe_root1):
-    caffe_root = caffe_root1
-elif os.path.isdir(caffe_root2):
-    caffe_root = caffe_root2
-else:
+HOME = os.environ["HOME"]
+caffe_root = os.path.join(HOME, "Caffe/Caffe_Compression")
+if not os.path.isdir(caffe_root):
     print ("caffe_root doesn't exist, please check.")
     exit(1)
 print ("using caffe @ '%s'" % caffe_root)
