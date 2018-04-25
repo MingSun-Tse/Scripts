@@ -13,10 +13,12 @@ import time
 
 # set caffe
 HOME = os.environ["HOME"]
-caffe_root = os.path.join(HOME, "Caffe/Caffe_Compression")
+caffe_root = os.path.join(HOME, "Caffe/Caffe_Compression/Caffe_APP")
 if not os.path.isdir(caffe_root):
-    print ("caffe_root doesn't exist, please check.")
-    exit(1)
+    caffe_root = os.path.join(HOME, "Caffe/Caffe_Compression")
+    if not os.path.isdir(caffe_root):
+        print ("caffe_root doesn't exist, please check.")
+        exit(1)
 print ("using caffe @ '%s'" % caffe_root)
 sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
@@ -68,7 +70,8 @@ class Tester():
         if not os.path.isdir(tested_weight_dir):
             os.makedirs(tested_weight_dir)
       
-        for iter in iters:
+        while len(iters):
+            iter = iters.pop(0)
             print ("dealing with iter %s's caffemodel:" % iter, sep=" ")
             acc_file = os.path.join(self.weight_dir, "val_accuracy.txt")
             fp = open(acc_file, "a+")
@@ -93,11 +96,7 @@ class Tester():
             # update iters pool
             iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i and name_mark in i]
             iters.sort()
-            if len(iters) == 0: 
-                break
-            
 
-  
 def parse_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', '-m', type = str, default = None, help = "The prototxt of network definition")
