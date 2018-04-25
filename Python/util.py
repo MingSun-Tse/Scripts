@@ -3,11 +3,6 @@ import os
 import sys
 import shutil
 import numpy as np
-home = os.environ["HOME"]
-caffe_root = home + "/Caffe/Caffe_default/python"
-print ("using caffe @ `%s`" % caffe_root)
-sys.path.insert(0, caffe_root)
-import caffe
 
 def my_move(file, dir):
     if type(file) == type(dir) == type("string"):
@@ -41,7 +36,7 @@ def get_test_batch_size(model):
         if "batch_size" in l:
             cnt += 1
         if cnt == 2:
-            return int(l.split(":")[1].strip())
+            return int(l.split(":")[1].split("#")[0].strip())
     print ("Error: train or test batch_size is not defined, please chech your net ptototxt.")
     return 0
 
