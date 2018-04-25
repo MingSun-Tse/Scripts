@@ -35,9 +35,9 @@ class Tester():
         self.gpu_id           = gpu if gpu else get_free_gpu()
         self.test_batch       = get_test_batch_size(self.model)
         tmp = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
-        self.acc_log          = os.path.join(dir, tmp[0]) if len(tmp) else "doesnt_exist_hhh"
+        self.acc_log          = os.path.join(dir, tmp[0]) if len(tmp) else "does_not_exist_hhh"
 
-    def test_one(self, weights):
+    def test_once(self, weights):
         test_iter = int(np.ceil(float(self.num_test_example) / self.test_batch))
         print ("test_iter is:", test_iter)
         tt = int(time.time())
@@ -81,18 +81,24 @@ class Tester():
             solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "_iter_"+str(iter)+".solverstate" in i and name_mark in i]
             solverstate  = solverstates[0] if len(solverstates) else None
             print (weights.split(os.sep)[-1])
-            acc = self.test_one(weights)
+            acc = self.test_once(weights)
            
             if os.path.exists(self.acc_log):
                 lr = get_lr(self.acc_log, iter)
                 if lr != get_lr(acc_file):
                     fp.write("lr = " + lr + "\n")
             
-            line = weights.split(os.sep)[-1] + "  " + "%7.5f" % acc[0] + "  " + "%7.5f" % acc[1] + "\n"
+            line = ("%-30s" % weights.split(os.sep)[-1]) + "  " + "%7.5f" % acc[0] + "  " + "%7.5f" % acc[1] + "\n"
             fp.write(line)
             fp.close()
             my_move(weights, tested_weight_dir)
             my_move(solverstate, tested_weight_dir)
+            
+            # update iters pool
+            iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i and name_mark in i]
+            iters.sort()
+            if len(iters) == 0: 
+                break
             
 
   

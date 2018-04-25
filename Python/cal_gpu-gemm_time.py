@@ -24,6 +24,7 @@ alexnet = {
 
 NumRowCol = {
 'alexnet': alexnet,
+'caffenet': alexnet,
 }
 
 
