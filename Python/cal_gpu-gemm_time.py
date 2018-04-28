@@ -28,11 +28,12 @@ NumRowCol = {
 }
 
 
-gpu_gemm_time = {}
+gpu_gemm_time = {} # layer_name: [total_time, num_group * time_iter]
 speedup = {}
 matrix_left = {}
 net_name = ""
 IF_find_net = False
+IF_after_Benchmark = False
 
 
 for line in open(inFile):
@@ -43,6 +44,10 @@ for line in open(inFile):
             net_name = line.split('"')[1].lower() # net name is using lower case
             print("the net is {}".format(net_name))
             IF_find_net = True
+    
+    if not IF_after_Benchmark:
+        if "Benchmark begins" in line:
+            IF_after_Benchmark = True # find the "Benchmark begins", don't count the timing before "Benchmark begins"
             
     if "squeezing to" in line:
         num_row_left = int(line.split("squeezing to ")[1].split("x")[0])
@@ -55,16 +60,16 @@ for line in open(inFile):
         num_row = NumRowCol[net_name][layer_name][0]
         num_col = NumRowCol[net_name][layer_name][1]
         speedup[layer_name] = num_row * num_col * 1.0 / matrix_left[layer_name]
-        
-    if line.endswith("Timing)"):
+
+    if IF_after_Benchmark and line.endswith("Timing)"):
         layer_name = line.split("\t")[0].split(" ")[-1]
         if layer_name in gpu_gemm_time.keys():
             gpu_gemm_time[layer_name][0] += float(line.split("]")[1].split(" ")[4])
             if line.split("]")[1].split(" ")[3] == "0:":
-                gpu_gemm_time[layer_name][1] += 1
+                gpu_gemm_time[layer_name][1] += 1 # only count once for group > 1
         else:
             gpu_gemm_time[layer_name] = [float(line.split("]")[1].split(" ")[4]), 1]
-            assert(line.split("]")[1].split(" ")[3] == "0:") # group should be `group: 0`
+            assert(line.split("]")[1].split(" ")[3] == "0:") # group should be `group: 0` because it's the first time meeting this layer
 
 layers = list(gpu_gemm_time.keys())
 layers.sort()
@@ -72,5 +77,5 @@ for layer in layers:
     if layer not in speedup.keys():
         speedup[layer] = 1.0
     ave_time = gpu_gemm_time[layer][0] / gpu_gemm_time[layer][1]
-    output = "{}: {} us ({} examples)  theoretical_speedup:{:.2f}"
+    output = "{}: {:.1f} us ({} examples)  theoretical_speedup:{:.2f}"
     print(output.format(layer, ave_time, gpu_gemm_time[layer][1], speedup[layer]))

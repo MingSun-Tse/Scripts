@@ -85,7 +85,7 @@ class Tester():
             if os.path.exists(self.acc_log):
                 lr = get_lr(self.acc_log, iter)
                 if lr != get_lr(acc_file):
-                    fp.write("lr = " + lr + "\n")
+                    fp.write("\nlr = " + lr + "\n")
             
             line = ("%-30s" % weights.split(os.sep)[-1]) + "  " + "%7.5f" % acc[0] + "  " + "%7.5f" % acc[1] + "\n"
             fp.write(line)
