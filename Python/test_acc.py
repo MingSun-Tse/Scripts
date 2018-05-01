@@ -13,12 +13,12 @@ import time
 
 # set caffe
 HOME = os.environ["HOME"]
-caffe_root = os.path.join(HOME, "Caffe/Caffe_Compression/Caffe_APP")
-if not os.path.isdir(caffe_root):
-    caffe_root = os.path.join(HOME, "Caffe/Caffe_Compression")
-    if not os.path.isdir(caffe_root):
-        print ("caffe_root doesn't exist, please check.")
-        exit(1)
+caffe_root = os.path.join(HOME, "Caffe/Caffe_default")
+# if not os.path.isdir(caffe_root):
+    # caffe_root = os.path.join(HOME, "Caffe/Caffe_Compression")
+    # if not os.path.isdir(caffe_root):
+        # print ("caffe_root doesn't exist, please check.")
+        # exit(1)
 print ("using caffe @ '%s'" % caffe_root)
 sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
