@@ -22,7 +22,7 @@ caffe_root = os.path.join(HOME, "Caffe/Caffe_default")
 print ("using caffe @ '%s'" % caffe_root)
 sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
-from util import get_free_gpu, get_test_batch_size, get_netproto, get_lr, my_move
+from util import get_free_gpu, get_test_batch_size, get_netproto, get_lr, my_move, find_acc
        
 
 class Tester():
@@ -34,7 +34,8 @@ class Tester():
         self.test_batch       = get_test_batch_size(self.model)
         tmp = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
         self.acc_log          = os.path.join(dir, tmp[0]) if len(tmp) else "does_not_exist_hhh"
-
+    
+    
     def test_once(self, weights):
         test_iter = int(np.ceil(float(self.num_test_example) / self.test_batch))
         print ("test_iter is:", test_iter)
@@ -51,8 +52,8 @@ class Tester():
                                       " 2> ", out_log])
         os.system(script)
         lines = open(out_log).readlines()
-        acc1 = lines[-3].strip().split(" ")[-1]
-        acc5 = lines[-2].strip().split(" ")[-1] # TODO(Ming): fix this for what has no acc5
+        acc1 = lines[-2].strip().split(" ")[-1]
+        acc5 = lines[-1].strip().split(" ")[-1] # TODO(Ming): fix this for what has no acc5
         os.remove(out_log) 
         print ("acurracy: " + acc1 + "  " + acc5)
         return float(acc1), float(acc5)

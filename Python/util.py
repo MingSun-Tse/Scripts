@@ -97,7 +97,12 @@ def get_pid(f):
                 return pid
     print ("Error: cannot get pid")
     return
-    
 
+def find_acc(logFile, top1 = True, top5 = True):
+    lines = open(logFile).readlines()
+    num_line = len(lines)
+    for i in range(num_line, 10, -1):
+        
+    
     
     
