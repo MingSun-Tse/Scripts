@@ -22,17 +22,18 @@ caffe_root = os.path.join(HOME, "Caffe/Caffe_default")
 print ("using caffe @ '%s'" % caffe_root)
 sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
-from util import get_free_gpu, get_test_batch_size, get_netproto, get_lr, my_move
+from util import get_free_gpu, get_test_batch_size, change_test_batch_size, get_netproto, get_lr, my_move
        
 
 class Tester():
-    def __init__(self, model, dir, num, gpu):
+    def __init__(self, model, dir, num, gpu, batch_size):
         self.model            = model if model else get_netproto(dir)
         self.weight_dir       = dir
         self.num_test_example = num
         self.gpu_id           = gpu if gpu else get_free_gpu()
-        self.test_batch       = get_test_batch_size(self.model)
-        tmp = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
+        self.test_batch       = batch_size if batch_size != 0 else get_test_batch_size(self.model)
+        self.model            = change_test_batch_size(self.model, batch_size) if batch_size != 0 else self.model
+        tmp                   = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
         self.acc_log          = os.path.join(dir, tmp[0]) if len(tmp) else "does_not_exist_hhh"
 
     def test_once(self, weights):
@@ -96,13 +97,17 @@ class Tester():
             # update iters pool
             iters = [int(i.split("_")[-1].split(".")[0]) for i in os.listdir(self.weight_dir) if ".caffemodel" in i and name_mark in i]
             iters.sort()
+        
+        if "_test-batch-size=" in self.model:
+            os.remove(self.model)
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', '-m', type = str, default = None, help = "The prototxt of network definition")
-    parser.add_argument('--weight_dir', '-w', type = str, help = "The folder containing caffemodels of weights")
+    parser.add_argument('--model',            '-m', type = str, default = None,  help = "The prototxt of network definition")
+    parser.add_argument('--weight_dir',       '-w', type = str,                  help = "The folder containing caffemodels of weights")
     parser.add_argument('--num_test_example', '-n', type = int, default = 50000, help = "the number of examples to test")
-    parser.add_argument('--gpu', '-g', type = str, default = None, help = "GPU id")
+    parser.add_argument('--gpu',              '-g', type = str, default = None,  help = "GPU id")
+    parser.add_argument('--batch_size',       '-b', type = int, default = 0,     help = "test batch size") # if batch_size not supplied, use the one in prototxt
     return parser.parse_args(args)
 
 if __name__ == "__main__":
@@ -111,6 +116,6 @@ if __name__ == "__main__":
         (2) python  test_acc.py  -w weight_dir                                       # automatically find `train_val.prototxt`
     '''
     args = parse_args(sys.argv[1:])
-    tester = Tester(args.model, args.weight_dir, args.num_test_example, args.gpu)
+    tester = Tester(args.model, args.weight_dir, args.num_test_example, args.gpu, args.batch_size)
     tester.test()
     

@@ -28,12 +28,12 @@ NumRowCol = {
 }
 
 
-gpu_gemm_time = {} # layer_name: [total_time, num_group * time_iter]
+gpu_gemm_time = {} # layer_name: [total_time, time_iter]
 speedup = {}
 matrix_left = {}
 net_name = ""
 IF_find_net = False
-IF_after_Benchmark = False
+IF_after_Benchmark = 1
 
 
 for line in open(inFile):
@@ -60,8 +60,8 @@ for line in open(inFile):
         num_row = NumRowCol[net_name][layer_name][0]
         num_col = NumRowCol[net_name][layer_name][1]
         speedup[layer_name] = num_row * num_col * 1.0 / matrix_left[layer_name]
-
-    if IF_after_Benchmark and line.endswith("Timing)"):
+    
+    if IF_after_Benchmark and line.lower().endswith("timing)"):
         layer_name = line.split("\t")[0].split(" ")[-1]
         if layer_name in gpu_gemm_time.keys():
             gpu_gemm_time[layer_name][0] += float(line.split("]")[1].split(" ")[4])
@@ -73,9 +73,20 @@ for line in open(inFile):
 
 layers = list(gpu_gemm_time.keys())
 layers.sort()
+sum_ave_time = 0
+for layer in layers:
+    ave_time = gpu_gemm_time[layer][0] / gpu_gemm_time[layer][1]
+    sum_ave_time += ave_time
+
 for layer in layers:
     if layer not in speedup.keys():
         speedup[layer] = 1.0
     ave_time = gpu_gemm_time[layer][0] / gpu_gemm_time[layer][1]
-    output = "{}: {:.1f} us ({} examples)  theoretical_speedup:{:.2f}"
-    print(output.format(layer, ave_time, gpu_gemm_time[layer][1], speedup[layer]))
+    output = "{:25s}  {:10.1f} us  {:.1f}%  ({} examples)  theoretical_speedup:{:.2f}"
+    print(output.format(layer,
+                        ave_time, 
+                        ave_time * 100.0 / sum_ave_time,
+                        gpu_gemm_time[layer][1],
+                        speedup[layer]))
+
+# TODO: sort by time percentage
