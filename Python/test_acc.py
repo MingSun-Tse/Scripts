@@ -91,10 +91,10 @@ class Tester():
                 if lr != get_lr(acc_file):
                     fp.write("\nlr = " + lr + "\n")
             
-            line = "".join("%-30s" % weights.split(os.sep)[-1],
+            line = "".join(["%-30s" % weights.split(os.sep)[-1],
                             "  %7.5f" % loss,
                             "  %7.5f" % acc1,
-                            "  %7.5f\n" % acc5)
+                            "  %7.5f\n" % acc5])
             fp.write(line)
             fp.close()
             my_move(weights, tested_weight_dir)

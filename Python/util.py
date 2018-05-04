@@ -122,15 +122,15 @@ def get_loss_acc(logFile):
     lines = open(logFile).readlines()
     num_line = len(lines)
     loss, acc1, acc5 = -1, -1, -1
-    for i in range(num_line, num_line - 10, -1): # In the last 10 lines, there should be loss, acc1 and acc5.
+    for i in range(num_line - 1, num_line - 11, -1): # In the last 10 lines, there should be loss, acc1 and acc5.
         line = lines[i].lower()
         if "loss = " in line and loss == -1:
             loss = float(line.split("loss = ")[1].split(" ")[0])
-        if "acc" in line and " = " in line and acc1 == -1 and acc5 == -1:
-            if "5" in line.split(" = ")[0].split("]"):
-                acc5 = float(line.strip().split(" = ")[1])
+        if "acc" in line and " = " in line:
+            if "5" in line.split(" = ")[0].split("]")[1]:
+                acc5 = float(line.strip().split(" = ")[1]) if acc5 == -1 else acc5
             else:
-                acc1 = float(line.strip().split(" = ")[1])
+                acc1 = float(line.strip().split(" = ")[1]) if acc1 == -1 else acc1
     return loss, acc1, acc5
     
     
