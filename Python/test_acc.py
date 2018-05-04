@@ -22,8 +22,7 @@ caffe_root = os.path.join(HOME, "Caffe/Caffe_default")
 print ("using caffe @ '%s'" % caffe_root)
 sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
-from util import get_free_gpu, get_test_batch_size, change_test_batch_size, get_netproto, get_lr, my_move
-       
+from util import get_free_gpu, get_test_batch_size, change_test_batch_size, get_netproto, get_lr, my_move, get_loss_acc
 
 class Tester():
     def __init__(self, model, dir, num, gpu, batch_size):
@@ -35,7 +34,8 @@ class Tester():
         self.model            = change_test_batch_size(self.model, batch_size) if batch_size != 0 else self.model
         tmp                   = [i for i in os.listdir(dir) if "retrain_acc.txt" in i]
         self.acc_log          = os.path.join(dir, tmp[0]) if len(tmp) else "does_not_exist_hhh"
-
+    
+    
     def test_once(self, weights):
         test_iter = int(np.ceil(float(self.num_test_example) / self.test_batch))
         print ("test_iter is:", test_iter)
@@ -51,12 +51,15 @@ class Tester():
                                       " -iterations ", str(test_iter), 
                                       " 2> ", out_log])
         os.system(script)
+        
         lines = open(out_log).readlines()
-        acc1 = lines[-3].strip().split(" ")[-1]
-        acc5 = lines[-2].strip().split(" ")[-1] # TODO(Ming): fix this for what has no acc5
+        acc1 = lines[-2].strip().split(" ")[-1]
+        acc5 = lines[-1].strip().split(" ")[-1] # TODO(Ming): fix this for what has no acc5
+        
+        loss, acc1, acc5 = get_loss_acc(out_log)
         os.remove(out_log) 
-        print ("acurracy: " + acc1 + "  " + acc5)
-        return float(acc1), float(acc5)
+        print ("loss and acurracy: " + str(loss) + "  " + str(acc1) + "  " + str(acc5))
+        return loss, acc1, acc5
         
 
     def test(self):
@@ -81,14 +84,18 @@ class Tester():
             solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "_iter_"+str(iter)+".solverstate" in i and name_mark in i]
             solverstate  = solverstates[0] if len(solverstates) else None
             print (weights.split(os.sep)[-1])
-            acc = self.test_once(weights)
+            loss, acc1, acc5 = self.test_once(weights)
            
             if os.path.exists(self.acc_log):
                 lr = get_lr(self.acc_log, iter)
                 if lr != get_lr(acc_file):
                     fp.write("\nlr = " + lr + "\n")
             
-            line = ("%-30s" % weights.split(os.sep)[-1]) + "  " + "%7.5f" % acc[0] + "  " + "%7.5f" % acc[1] + "\n"
+            line = "%-30s" % weights.split(os.sep)[-1]
+                        + "  " + "%7.5f" % loss
+                        + "  " + "%7.5f" % acc1
+                        + "  " + "%7.5f" % acc5
+                        + "\n"
             fp.write(line)
             fp.close()
             my_move(weights, tested_weight_dir)
