@@ -49,6 +49,7 @@ def Slim(model, caffemodel, model_slimmed):
         print ("{}: {} columns ({}) are pruned".format(layer, 
                                                        len(pruned_cols[layer]),
                                                        len(pruned_cols[layer]) * 1.0 / w.shape[1]))
+        print (pruned_cols[layer])
     
     # Prune rows
     print("\n")
