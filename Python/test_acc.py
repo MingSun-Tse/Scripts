@@ -76,14 +76,13 @@ class Tester():
       
         while len(iters):
             iter = iters.pop(0)
-            print ("dealing with iter %s's caffemodel:" % iter, sep=" ")
             acc_file = os.path.join(self.weight_dir, "val_accuracy.txt")
             fp = open(acc_file, "a+")
             
             weights      = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "_iter_"+str(iter)+".caffemodel"  in i and name_mark in i][0]
             solverstates = [os.path.join(self.weight_dir, i) for i in os.listdir(self.weight_dir) if "_iter_"+str(iter)+".solverstate" in i and name_mark in i]
             solverstate  = solverstates[0] if len(solverstates) else None
-            print (weights.split(os.sep)[-1])
+            print ("dealing with iter %s's caffemodel: %s" % (iter, weights.split(os.sep)[-1]))
             loss, acc1, acc5 = self.test_once(weights)
            
             if os.path.exists(self.acc_log):
