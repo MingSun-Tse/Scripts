@@ -79,7 +79,7 @@ def plot_acc(log_file, ID):
         
         ## smoothed train loss
         if "Iteration" in lines[i] and "loss = " in lines[i]: 
-            train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(", smoothed loss")[0]),  float(lines[i].split("loss = ")[-1].split(",")[0])])
+            train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1].split(",")[0])])
 
             
     ## Converted to np array for convenience
@@ -127,13 +127,16 @@ def plot_acc(log_file, ID):
     
     ## Plot val acc
     if len(val_acc):
-        smoothed_val_acc = smooth(val_acc[:,1], 10)
+	smooth_step = 1
+        smoothed_val_acc = smooth(val_acc[:,1], smooth_step)
         myprint (diff(smoothed_val_acc * 100))
-        plt.plot(val_acc[:,0], smoothed_val_acc, "-", color=ColorSet[CntPlot%len(ColorSet)], label="%s_val_acc"%ID); CntPlot += 1
+	label = "{}_val_acc, smooth_step={}".format(ID, smooth_step)
+        plt.plot(val_acc[:,0], smoothed_val_acc[:], "-", color=ColorSet[CntPlot%len(ColorSet)], label=label); CntPlot += 1
+	plt.xlim([0, 40000]); plt.ylim([0.65,0.8])
         if len(val_acc5):
             smoothed_val_acc5 = smooth(val_acc5[:,1], 10)
             myprint (diff(smoothed_val_acc5 * 100))
-            plt.plot(val_acc5[:,0], smoothed_val_acc5, "-", color=ColorSet[CntPlot%len(ColorSet)], label="%s_val_acc5"%ID); CntPlot += 1
+            plt.plot(val_acc5[:,0], smoothed_val_acc5, "-", color=ColorSet[CntPlot%len(ColorSet)], label=label.replace("acc", "acc5")); CntPlot += 1
             
 def smooth(L, window = 50):
     # print ("call smooth, window = ", window)
