@@ -7,11 +7,13 @@ import matplotlib.pyplot as plt
 import os
 
 ColorSet = ("r", "b", "g", "k", "c", "y")
-CntPlot  = 0
+CntPlot = 0
 Nets = ("caffeNet", "cifar10_full")
-Net  = "None"
-ColNum = {"cifar10_full":(75, 800, 800), 
-           "caffeNet":(363, 1200, 2304, 1728, 1728)} ## layer 2,4,5, group = 2
+Net = "None"
+ColNum = {
+  "cifar10_full":(75, 800, 800), 
+  "caffeNet":(363, 1200, 2304, 1728, 1728) # layer 2,4,5, group = 2
+}
 
 def plot_acc(log_file, ID):
     val_acc             = []
@@ -19,7 +21,7 @@ def plot_acc(log_file, ID):
     val_loss            = []
     train_loss          = []
     train_loss_smoothed = []
-    acc5_of_diff_lr_stage = {} # like the accuracies when lr = 0.005
+    acc5_of_diff_lr_stage = {} # e.g. the accuracies when lr = 0.001
     global CntPlot
 
     
@@ -32,9 +34,8 @@ def plot_acc(log_file, ID):
             global Net
             Net = lines[i].lower().split('"')[1]
             IF_find_Net = True
-        
-        
-        ## val acc
+
+            ## val acc
         if "Test net output" in lines[i] and "accuracy = " in lines[i]:
             acc_ =  float(lines[i].split("= ")[-1])
             j = 1
@@ -55,7 +56,7 @@ def plot_acc(log_file, ID):
             
             # get acc of each learning rate
             j = 1
-            while(not "lr = " in lines[i+j]):
+            while not "lr = " in lines[i+j]:
                 j += 1
             lr_ = str(float(lines[i+j].split("lr = ")[-1])) # for '1e-4' -> '0.0001'
             if lr_ in acc5_of_diff_lr_stage.keys():
@@ -110,29 +111,31 @@ def plot_acc(log_file, ID):
         for acc5 in np.arange(min_acc5, max_acc5, step):
             print ("%4.2f+" % acc5, end=sep)
         print ("acc_max")
-        print ("%7.5f" % min(val_acc5[:,1]), end=sep)
+        print ("%7.5f" % min(val_acc5[:, 1]), end=sep)
         for acc5 in np.arange(min_acc5, max_acc5, step):
             num = len(np.where(np.logical_and(val_acc5[:,1]>=acc5,  val_acc5[:,1]<acc5+step))[0])
             print ("%5d" % num, end=sep)
-        print ("%7.5f" % max(val_acc5[:,1]))
+        print ("%7.5f" % max(val_acc5[:, 1]))
 
     
-    ## Plot loss
-    # plt.plot(train_loss[:,0], train_loss[:,1], "-k", label = "train loss")
+    ## Plot train loss
+    print(train_loss)
+    plt.plot(train_loss[:, 0], train_loss[:, 1], "-k", label = "train loss")
     # train_loss_smoothed = smooth(train_loss_smoothed, 1000)
     # plt.plot(train_loss_smoothed[:,0], train_loss_smoothed[:,1], "-b", label = "smoothed train loss")
     
-    # if len(val_loss):
-        # plt.plot(val_loss[:,0], val_loss[:,1], "-", color = ColorSet[CntPlot%len(ColorSet)], label = "val_%s_loss"%ID); CntPlot += 1
+    ## Plot val loss
+    if len(val_loss):
+        plt.plot(val_loss[:,0], val_loss[:,1], "-", color = ColorSet[CntPlot%len(ColorSet)], label = "val_%s_loss"%ID); CntPlot += 1
     
     ## Plot val acc
     if len(val_acc):
-	smooth_step = 1
+        smooth_step = 1
         smoothed_val_acc = smooth(val_acc[:,1], smooth_step)
         myprint (diff(smoothed_val_acc * 100))
-	label = "{}_val_acc, smooth_step={}".format(ID, smooth_step)
+        label = "{}_val_acc, smooth_step={}".format(ID, smooth_step)
         plt.plot(val_acc[:,0], smoothed_val_acc[:], "-", color=ColorSet[CntPlot%len(ColorSet)], label=label); CntPlot += 1
-	plt.xlim([0, 40000]); plt.ylim([0.65,0.8])
+        plt.xlim([0, 40000]); plt.ylim([0.65,0.8])
         if len(val_acc5):
             smoothed_val_acc5 = smooth(val_acc5[:,1], 10)
             myprint (diff(smoothed_val_acc5 * 100))
@@ -280,9 +283,9 @@ if __name__ == "__main__":
         (1) compare acc or see if get acc plateau: 
             `python  this_file.py  **/weights/log_192-20180123-1608_retrain_acc.txt  **/weights/log_192-20180123-1632_retrain_acc.txt`
             `python  this_file.py  **/weights/log_192-20180123-1608_retrain_acc.txt             log_192-20180123-1632_retrain_acc.txt`
-        (2) 
     '''
     compare_acc_trajectory(sys.argv[1:])
+    
     # path = str(sys.argv[1]).split("/log")[0]
     # timeID = str(sys.argv[1]).split("/log")[1].split("_")[1]
     # print ("time stamp is: " + timeID)
