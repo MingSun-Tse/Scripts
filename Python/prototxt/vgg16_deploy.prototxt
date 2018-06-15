@@ -1,49 +1,17 @@
 name: "VGG_ILSVRC_16_layers"
 layer {
-  name: "data"
-  type: "Data"
+  name: "input"
+  type: "Input"
   top: "data"
-  top: "label"
-  include {
-    phase: TRAIN
-  }
-  # mean pixel / channel-wise mean instead of mean image
-  transform_param {
-    crop_size: 224
-    mean_value: 103.939
-    mean_value: 116.779
-    mean_value: 123.68
-    mirror: true
-  }
-  data_param {
-    source: "/opt/ssd480/Dataset/ImageNet_Dataset/ilsvrc12_train_lmdb_resized_and_cropped"
-    batch_size: 1 # it was 256
-    backend: LMDB
+  input_param {
+    shape {
+      dim: 1
+      dim: 3
+      dim: 224
+      dim: 224
+    }
   }
 }
-layer {
-  name: "data"
-  type: "Data"
-  top: "data"
-  top: "label"
-  include {
-    phase: TEST
-  }
-  # mean pixel / channel-wise mean instead of mean image
-  transform_param {
-    crop_size: 224
-    mean_value: 103.939
-    mean_value: 116.779
-    mean_value: 123.68
-    mirror: false
-  }
-  data_param {
-    source: "/opt/ssd480/Dataset/ImageNet_Dataset/ilsvrc12_val_lmdb_resized_and_cropped"
-    batch_size: 50
-    backend: LMDB
-  }
-}
-
 layer {
   name: "conv1_1"
   type: "Convolution"
@@ -66,7 +34,6 @@ layer {
   type: "Convolution"
   bottom: "conv1_1"
   top: "conv1_2"
-
   convolution_param {
     num_output: 64
     pad: 1
@@ -95,7 +62,6 @@ layer {
   type: "Convolution"
   bottom: "pool1"
   top: "conv2_1"
-
   convolution_param {
     num_output: 128
     pad: 1
@@ -113,7 +79,6 @@ layer {
   type: "Convolution"
   bottom: "conv2_1"
   top: "conv2_2"
-
   convolution_param {
     num_output: 128
     pad: 1
@@ -142,7 +107,6 @@ layer {
   type: "Convolution"
   bottom: "pool2"
   top: "conv3_1"
-
   convolution_param {
     num_output: 256
     pad: 1
@@ -160,7 +124,6 @@ layer {
   type: "Convolution"
   bottom: "conv3_1"
   top: "conv3_2"
-
   convolution_param {
     num_output: 256
     pad: 1
@@ -178,7 +141,6 @@ layer {
   type: "Convolution"
   bottom: "conv3_2"
   top: "conv3_3"
-
   convolution_param {
     num_output: 256
     pad: 1
@@ -207,7 +169,6 @@ layer {
   type: "Convolution"
   bottom: "pool3"
   top: "conv4_1"
-
   convolution_param {
     num_output: 512
     pad: 1
@@ -225,7 +186,6 @@ layer {
   type: "Convolution"
   bottom: "conv4_1"
   top: "conv4_2"
-
   convolution_param {
     num_output: 512
     pad: 1
@@ -243,7 +203,6 @@ layer {
   type: "Convolution"
   bottom: "conv4_2"
   top: "conv4_3"
-
   convolution_param {
     num_output: 512
     pad: 1
@@ -272,7 +231,6 @@ layer {
   type: "Convolution"
   bottom: "pool4"
   top: "conv5_1"
-
   convolution_param {
     num_output: 512
     pad: 1
@@ -290,7 +248,6 @@ layer {
   type: "Convolution"
   bottom: "conv5_1"
   top: "conv5_2"
-
   convolution_param {
     num_output: 512
     pad: 1
@@ -389,32 +346,8 @@ layer {
   }
 }
 layer {
-  name: "accuracy"
-  type: "Accuracy"
+  name: "prob"
+  type: "Softmax"
   bottom: "fc8"
-  bottom: "label"
-  top: "accuracy"
-  include {
-    phase: TEST
-  }
-}
-layer {
-  name: "accuracy_top_5"
-  type: "Accuracy"
-  bottom: "fc8"
-  bottom: "label"
-  top: "accuracy_top_5"
-  accuracy_param {
-    top_k: 5
-  }
-  include {
-    phase: TEST
-  }
-}
-layer {
-  name: "loss"
-  type: "SoftmaxWithLoss"
-  bottom: "fc8"
-  bottom: "label"
-  top: "loss"
+  top: "prob"
 }
