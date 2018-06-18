@@ -24,7 +24,6 @@ def plot_acc(log_file, ID):
     acc5_of_diff_lr_stage = {} # e.g. the accuracies when lr = 0.001
     global CntPlot
 
-    
     ## Parsing
     lines = [l.strip() for l in open(log_file)]
     IF_find_Net = False
@@ -35,7 +34,7 @@ def plot_acc(log_file, ID):
             Net = lines[i].lower().split('"')[1]
             IF_find_Net = True
 
-            ## val acc
+        ## val acc
         if "Test net output" in lines[i] and "accuracy = " in lines[i]:
             acc_ =  float(lines[i].split("= ")[-1])
             j = 1
@@ -72,14 +71,14 @@ def plot_acc(log_file, ID):
             val_loss.append([int(lines[i-k].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1].split(" ")[0])])
         
         ## train loss
-        if "Train net output" in lines[i] and "loss" in lines[i]: 
+        if "Train net output" in lines[i] and "loss" in lines[i]: # example: Train net output #0: loss = 0.552588 (* 1 = 0.552588 loss)
             t = 1
             while(not lines[i-t].split("Iteration ")[-1].split(",")[0].isdigit()):
                 t = t + 1
             train_loss.append([int(lines[i-t].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1].split(" ")[0])]) 
         
         ## smoothed train loss
-        if "Iteration" in lines[i] and "loss = " in lines[i]: 
+        if "Iteration" in lines[i] and "loss = " in lines[i]: # example: Iteration 369200, smoothed loss = 0.445793
             train_loss_smoothed.append([int(lines[i].split("Iteration ")[-1].split(",")[0]),  float(lines[i].split("loss = ")[-1].split(",")[0])])
 
             
@@ -119,26 +118,26 @@ def plot_acc(log_file, ID):
 
     
     ## Plot train loss
-    print(train_loss)
+    print(train_loss_smoothed)
+    plt.title(ID)
     plt.plot(train_loss[:, 0], train_loss[:, 1], "-k", label = "train loss")
-    # train_loss_smoothed = smooth(train_loss_smoothed, 1000)
-    # plt.plot(train_loss_smoothed[:,0], train_loss_smoothed[:,1], "-b", label = "smoothed train loss")
+    plt.plot(train_loss_smoothed[:, 0], smooth(train_loss_smoothed[:, 1], 10), "-b", label = "smoothed train loss")
     
     ## Plot val loss
     if len(val_loss):
-        plt.plot(val_loss[:,0], val_loss[:,1], "-", color = ColorSet[CntPlot%len(ColorSet)], label = "val_%s_loss"%ID); CntPlot += 1
+        plt.plot(val_loss[:,0], val_loss[:,1], "-", color = ColorSet[CntPlot%len(ColorSet)], label = "val loss"); CntPlot += 1
     
     ## Plot val acc
     if len(val_acc):
         smooth_step = 1
         smoothed_val_acc = smooth(val_acc[:,1], smooth_step)
-        myprint (diff(smoothed_val_acc * 100))
-        label = "{}_val_acc, smooth_step={}".format(ID, smooth_step)
+        myprint(diff(smoothed_val_acc * 100))
+        label = "val acc, smooth_step={}".format(smooth_step)
         plt.plot(val_acc[:,0], smoothed_val_acc[:], "-", color=ColorSet[CntPlot%len(ColorSet)], label=label); CntPlot += 1
-        plt.xlim([0, 40000]); plt.ylim([0.65,0.8])
+        # plt.xlim([0, 40000]); plt.ylim([0.65,0.8])
         if len(val_acc5):
             smoothed_val_acc5 = smooth(val_acc5[:,1], 10)
-            myprint (diff(smoothed_val_acc5 * 100))
+            myprint(diff(smoothed_val_acc5 * 100))
             plt.plot(val_acc5[:,0], smoothed_val_acc5, "-", color=ColorSet[CntPlot%len(ColorSet)], label=label.replace("acc", "acc5")); CntPlot += 1
             
 def smooth(L, window = 50):
@@ -211,8 +210,6 @@ def plot_prune(log_file):
             
     np.save(log_file.split(".txt")[0]+".npy", pruned_ratio)
 
-    
-
     ##plt.subplot(2,1,1)
     # Plot Pruning Number
     for layer, r in pruned_ratio.items():
@@ -225,7 +222,6 @@ def plot_prune(log_file):
         print (iter)
         assert len(iter) == 1
         plt.plot([iter[0], iter[0]], [0, 1], "-k")
-        
         
     plt.xlabel("Step"); plt.ylabel("pruned ratio")
     plt.legend()

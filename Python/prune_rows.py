@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 import sys
 import numpy as np
-caffe_root = "/home/wanghuan/Caffe/Caffe_default"
+caffe_root = "/home2/wanghuan/Caffe/Caffe_default"
 sys.path.insert(0, os.path.join(caffe_root, 'python'))
 import caffe as c
 import pickle
