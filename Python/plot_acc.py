@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import os
 
-ColorSet = ("r", "b", "g", "k", "c", "y")
+ColorSet = ("b", "y", "r", "g", "k", "c")
 CntPlot = 0
 Nets = ("caffeNet", "cifar10_full")
 Net = "None"
@@ -121,7 +121,7 @@ def plot_acc(log_file, ID):
     print(train_loss_smoothed)
     plt.title(ID)
     plt.plot(train_loss[:, 0], train_loss[:, 1], "-k", label = "train loss")
-    plt.plot(train_loss_smoothed[:, 0], smooth(train_loss_smoothed[:, 1], 10), "-b", label = "smoothed train loss")
+    plt.plot(train_loss_smoothed[:, 0], smooth(train_loss_smoothed[:, 1], 10), color = ColorSet[CntPlot%len(ColorSet)], label = "smoothed train loss"); CntPlot += 1
     
     ## Plot val loss
     if len(val_loss):
@@ -132,7 +132,7 @@ def plot_acc(log_file, ID):
         smooth_step = 1
         smoothed_val_acc = smooth(val_acc[:,1], smooth_step)
         myprint(diff(smoothed_val_acc * 100))
-        label = "val acc, smooth_step={}".format(smooth_step)
+        label = "val acc"
         plt.plot(val_acc[:,0], smoothed_val_acc[:], "-", color=ColorSet[CntPlot%len(ColorSet)], label=label); CntPlot += 1
         # plt.xlim([0, 40000]); plt.ylim([0.65,0.8])
         if len(val_acc5):
