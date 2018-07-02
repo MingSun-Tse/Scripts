@@ -45,7 +45,7 @@ os.system(script2)
 # plot speedup
 speedup = []
 for line in open(inFile.replace("_prune.txt", "_Step.txt")):
-    step = int(line.split("Step ")[1].split(":")[0])
+    step = int(line.split("Step ")[1].split(":")[0].split(" ")[0])
     speedup_ = float(line.split(": ")[1].split("/")[0])
     speedup.append([step, speedup_])
 speedup = np.array(speedup)
