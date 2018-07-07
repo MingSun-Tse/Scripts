@@ -111,11 +111,12 @@ def main(model, weights, speedup, exempted_layers, GFLOPs_weight):
     GFLOPs_ratio = {}
     for layer in layers:
       GFLOPs_ratio[layer] = GFLOPs[layer] * 1.0 / np.sum(GFLOPs.values())
-      if GFLOPs_ratio[layer] < 0.01: # automatically ignore those layers with little computation
+    for layer in layers:
+      if GFLOPs_ratio[layer] / np.average(GFLOPs_ratio.values()) <= 0.1 and GFLOPs_ratio[layer] <= 0.01: # automatically ignore those layers with little computation
         exempted_layers.append(layer)
-    print("before twist, pr_based_on_GFLOPs:", GFLOPs_ratio)
+    # print("before twist, pr_based_on_GFLOPs:", GFLOPs_ratio)
     pr_based_on_GFLOPs = softmax(GFLOPs_ratio, exempted_layers)
-    print("after  twist, pr_based_on_GFLOPs:", pr_based_on_GFLOPs)
+    # print("after  twist, pr_based_on_GFLOPs:", pr_based_on_GFLOPs)
       
     # PCA analysis
     pr_based_on_PCA = {}
@@ -154,9 +155,9 @@ def main(model, weights, speedup, exempted_layers, GFLOPs_weight):
       for layer in layers:
         if layer in exempted_layers: continue
         pr_based_on_PCA[layer] = np.average(err_ratios[layer])
-      print("before twist, pr_based_on_PCA:", pr_based_on_PCA)
+      # print("before twist, pr_based_on_PCA:", pr_based_on_PCA)
       pr_based_on_PCA = softmax(pr_based_on_PCA) # twist the ratios to make them more normal
-      print("after  twist, pr_based_on_PCA:", pr_based_on_PCA)
+      # print("after  twist, pr_based_on_PCA:", pr_based_on_PCA)
     
     else:
       for layer in layers:
@@ -195,6 +196,6 @@ if __name__ == "__main__":
   parser.add_option("-w", "--weights", dest = "weights", type = "string", help = "the path of caffemodel")
   parser.add_option("-s", "--speedup", dest = "speedup", type = "float",  help = "speedup ratio you want", default = 2.0)
   parser.add_option("-e", "--exempted_layers", dest = "exempted_layers", type = "string", help = "the layers not going to be pruned")
-  parser.add_option("-g", "--GFLOPs_weight", dest = "GFLOPs_weight", type = "float", default = 0.75, help = "balance off the GFLOPs and PCA analysis when determining prune_ratio")
+  parser.add_option("-g", "--GFLOPs_weight", dest = "GFLOPs_weight", type = "float", default = 0.8, help = "balance off the GFLOPs and PCA analysis when determining prune_ratio")
   values, args = parser.parse_args(sys.argv)
   main(values.model, values.weights, values.speedup, values.exempted_layers, values.GFLOPs_weight)
