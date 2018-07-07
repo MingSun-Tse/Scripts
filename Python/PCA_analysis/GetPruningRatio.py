@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 # Set Caffe
-CAFFE_ROOT = "/home/wanghuan/Caffe/Caffe_default"
+HOME = os.environ["HOME"]
+CAFFE_ROOT = os.path.join(HOME, "Caffe/Caffe_default")
 sys.path.insert(0, os.path.join(CAFFE_ROOT, "python"))
 import caffe
 
