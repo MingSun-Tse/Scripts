@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import numpy as np
+import math
 from optparse import OptionParser
 try:
   import cPickle as pkl
@@ -74,13 +75,30 @@ def get_layers(model):
       layers.append(lines[i - k].split('"')[1])
   return layers
 
-def main(model, weights, speedup, exempt_first_conv):
-    assert(speedup > 0)
+def softmax(x, exempted_layers = []):
+  values = []
+  for k, v in x.items():
+    if k in exempted_layers: continue
+    values.append(pow(math.e, v))
+  y = {}
+  for k, v in x.items():
+    if k in exempted_layers: continue
+    y[k] = pow(math.e, v) / sum(values)
+  return y
+
+def main(model, weights, speedup, exempted_layers, GFLOPs_weight):
+    assert(speedup > 0 and 0 <= GFLOPs_weight <= 1)
+    exempted_layers = exempted_layers.split("/") if exempted_layers else []
+  
     # Setup
     model = os.path.abspath(model)
     weights = os.path.abspath(weights)
     net_name = get_net_name(model)
+    layers = get_layers(model)
     print("net: " + net_name)
+    print("%s conv layers:" % len(layers), layers)
+    
+    # Get GFLOPs
     weights_dir = os.path.join(os.path.split(model)[0], net_name)
     if not os.path.exists(weights_dir):
       os.mkdir(weights_dir)
@@ -90,62 +108,93 @@ def main(model, weights, speedup, exempt_first_conv):
     else:
       GFLOPs = save_weights_to_npy(model, weights, weights_dir)
     print("GFLOPs: %.4f MAC" % (np.sum(GFLOPs.values()) / 1e9))
-    
+    GFLOPs_ratio = {}
+    for layer in layers:
+      GFLOPs_ratio[layer] = GFLOPs[layer] * 1.0 / np.sum(GFLOPs.values())
+      if GFLOPs_ratio[layer] < 0.01: # automatically ignore those layers with little computation
+        exempted_layers.append(layer)
+    print("before twist, pr_based_on_GFLOPs:", GFLOPs_ratio)
+    pr_based_on_GFLOPs = softmax(GFLOPs_ratio, exempted_layers)
+    print("after  twist, pr_based_on_GFLOPs:", pr_based_on_GFLOPs)
+      
     # PCA analysis
-    err_ratios = {}
-    MIN, MAX, STEP = 0.1, 1, 0.05 # the keep ratio range of PCA
-    layers = get_layers(model)
-    print("%s conv layers:" % len(layers), layers)
-    GFLOPs_exempted = 0 # the GFLOPs sum of exempted layers
-    for layer in layers:
-      if layer == layers[0] and exempt_first_conv:
-        print("%s exempted" % layer)
-        err_ratios[layer] = [0] * int((MAX - MIN) / STEP)
-        GFLOPs_exempted += GFLOPs[layer]
-        continue
-      err_ratios[layer] = []
-      w = os.path.join(weights_dir, "weights_" + layer + ".npy")
-      for keep_ratio in np.arange(MIN, MAX, STEP):
-          err_ratios[layer].append(pca_analysis(np.load(w), keep_ratio))
-      print ("%s PCA done" % layer)
+    pr_based_on_PCA = {}
+    if 0 <= GFLOPs_weight < 1:
+      err_ratios = {}
+      MIN, MAX, STEP = 0.1, 1, 0.1 # the keep ratio range of PCA
+      for layer in layers:
+        if layer in exempted_layers:
+          print("%s exempted" % layer)
+          continue
+        err_ratios[layer] = []
+        w = os.path.join(weights_dir, "weights_" + layer + ".npy")
+        for keep_ratio in np.arange(MIN, MAX, STEP):
+            err_ratios[layer].append(pca_analysis(np.load(w), keep_ratio))
+        print ("%s PCA done" % layer)
+      
+      for i in range(int((MAX - MIN) / STEP)):
+        # relative prune_ratio is inversely proportional to err_ratio
+        mul = 1.0
+        for layer in layers:
+          if layer in exempted_layers: continue
+          mul *= err_ratios[layer][i]
+        for layer in layers:
+          if layer in exempted_layers: continue
+          err_ratios[layer][i] = mul / err_ratios[layer][i] # now err_ratios is relative prune_ratio
+        
+        # normalize relative prune_ratio
+        sum = 0.0
+        for layer in layers:
+          if layer in exempted_layers: continue
+          sum += err_ratios[layer][i]
+        for layer in layers:
+          if layer in exempted_layers: continue
+          err_ratios[layer][i] /= sum
+          
+      for layer in layers:
+        if layer in exempted_layers: continue
+        pr_based_on_PCA[layer] = np.average(err_ratios[layer])
+      print("before twist, pr_based_on_PCA:", pr_based_on_PCA)
+      pr_based_on_PCA = softmax(pr_based_on_PCA) # twist the ratios to make them more normal
+      print("after  twist, pr_based_on_PCA:", pr_based_on_PCA)
     
-    # Calculate pruning ratio
-    for i in range(int((MAX - MIN) / STEP)):
-      sum = 0
+    else:
       for layer in layers:
-        sum += err_ratios[layer][i]
-      for layer in layers:
-        err_ratios[layer][i] /= sum
-    remaining_ratio = {}
-    sum_gflops = 0
+        pr_based_on_PCA[layer] = 0
+   
+    # combine PCA analysis and GFLOPs to determine the prune_ratio
+    relative_prune_ratio = {}
+    reduced_gflops = 0.0
     for layer in layers:
-      remaining_ratio[layer] = np.average(err_ratios[layer])
-      sum_gflops += remaining_ratio[layer] * GFLOPs[layer]
-    multiplier = (np.sum(GFLOPs.values()) / speedup - GFLOPs_exempted) / sum_gflops
+      if layer in exempted_layers: continue
+      relative_prune_ratio[layer] = (1 - GFLOPs_weight) * pr_based_on_PCA[layer] + GFLOPs_weight * pr_based_on_GFLOPs[layer]
+      reduced_gflops += relative_prune_ratio[layer] * GFLOPs[layer]
+    multiplier = (np.sum(GFLOPs.values())  - np.sum(GFLOPs.values()) / speedup) / reduced_gflops
     
     # Check pruning ratio
-    with open(os.path.join(weights_dir, "pruning_ratio_result_speedup=%s.txt" % speedup), 'w+') as f:
+    with open(os.path.join(weights_dir, "pruning_ratio_result_speedup_%s.txt" % speedup), 'w+') as f:
       for layer in layers:
-        prune_ratio = 0 if layer == layers[0] and exempt_first_conv else 1 - multiplier * remaining_ratio[layer]
-        line1 = "pruning ratio of %s: %.2f" % (layer, prune_ratio)
-        line2 = " (GFLOPs ratio = %.3f)" % (GFLOPs[layer] * 1.0 / np.sum(GFLOPs.values()))
+        prune_ratio = 0 if layer in exempted_layers else multiplier * relative_prune_ratio[layer]
+        line1 = "pruning ratio of %s: %.4f" % (layer, prune_ratio)
+        line2 = " (GFLOPs ratio = %.3f)" % GFLOPs_ratio[layer]
         f.write(line1 + line2 + "\n")
         print(line1 + line2)
-        if multiplier * remaining_ratio[layer] > 1:
-          print("bug: pruning ratio < 0")
+        if prune_ratio >= 1:
+          print("bug: pruning ratio >= 1")
 
 if __name__ == "__main__":
   usage = \
   '''
   usage example:
-    python  this_file.py  -m deploy.prototxt  -w some_net.caffemodel  -s 4
+    python  this_file.py  -m deploy.prototxt  -w some_net.caffemodel
   for help:
     python  this_file.py  -h
   '''
   parser = OptionParser(usage = usage)
   parser.add_option("-m", "--model",   dest = "model",   type = "string", help = "the path of deploy.prototxt")
   parser.add_option("-w", "--weights", dest = "weights", type = "string", help = "the path of caffemodel")
-  parser.add_option("-s", "--speedup", dest = "speedup", type = "float",  help = "speedup ratio you want")
-  parser.add_option("-e", "--exempt_first_conv", dest = "exempt_first_conv", type = "int", default = True, help = "whether not to prune the first conv layer, default true")
+  parser.add_option("-s", "--speedup", dest = "speedup", type = "float",  help = "speedup ratio you want", default = 2.0)
+  parser.add_option("-e", "--exempted_layers", dest = "exempted_layers", type = "string", help = "the layers not going to be pruned")
+  parser.add_option("-g", "--GFLOPs_weight", dest = "GFLOPs_weight", type = "float", default = 0.75, help = "balance off the GFLOPs and PCA analysis when determining prune_ratio")
   values, args = parser.parse_args(sys.argv)
-  main(values.model, values.weights, values.speedup, values.exempt_first_conv)
+  main(values.model, values.weights, values.speedup, values.exempted_layers, values.GFLOPs_weight)
