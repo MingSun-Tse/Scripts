@@ -86,7 +86,7 @@ def softmax(x, exempted_layers = []):
     y[k] = pow(math.e, v) / sum(values)
   return y
 
-def main(model, weights, speedup, exempted_layers, GFLOPs_weight):
+def main(model, weights, speedup, exempted_layers, GFLOPs_weight, keep_ratio_step):
     assert(speedup > 0 and 0 <= GFLOPs_weight <= 1)
     exempted_layers = exempted_layers.split("/") if exempted_layers else []
   
@@ -122,7 +122,7 @@ def main(model, weights, speedup, exempted_layers, GFLOPs_weight):
     pr_based_on_PCA = {}
     if 0 <= GFLOPs_weight < 1:
       err_ratios = {}
-      MIN, MAX, STEP = 0.1, 1, 0.1 # the keep ratio range of PCA
+      MIN, MAX, STEP = 0.1, 1, keep_ratio_step # the keep ratio range of PCA
       for layer in layers:
         if layer in exempted_layers:
           print("%s exempted" % layer)
@@ -194,8 +194,11 @@ if __name__ == "__main__":
   parser = OptionParser(usage = usage)
   parser.add_option("-m", "--model",   dest = "model",   type = "string", help = "the path of deploy.prototxt")
   parser.add_option("-w", "--weights", dest = "weights", type = "string", help = "the path of caffemodel")
-  parser.add_option("-s", "--speedup", dest = "speedup", type = "float",  help = "speedup ratio you want", default = 2.0)
+  parser.add_option("-s", "--speedup", dest = "speedup", type = "float",  help = "speedup ratio you want (then '-s' > 1) or sparsity you want (then 0 < '-s' < 1)", default = 2.0)
   parser.add_option("-e", "--exempted_layers", dest = "exempted_layers", type = "string", help = "the layers not going to be pruned")
   parser.add_option("-g", "--GFLOPs_weight", dest = "GFLOPs_weight", type = "float", default = 0.8, help = "balance off the GFLOPs and PCA analysis when determining prune_ratio")
+  parser.add_option("-k", "--keep_ratio_step", dest = "keep_ratio_step", type = "float", default = 0.1, help = "the keep_ratio_step in PCA analysis")
   values, args = parser.parse_args(sys.argv)
-  main(values.model, values.weights, values.speedup, values.exempted_layers, values.GFLOPs_weight)
+  if 0 < values.speedup <= 1:
+    values.speedup = 1.0 / (1 - values.speedup) # in this way, '-s' means "--sparsity"
+  main(values.model, values.weights, values.speedup, values.exempted_layers, values.GFLOPs_weight, values.keep_ratio_step)
