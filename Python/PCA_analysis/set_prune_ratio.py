@@ -31,13 +31,13 @@ out_model_prototxt = open(model.replace(".prototxt", "_prune_ratio_set_done.prot
 lines = [i for i in open(model)]
 for i in range(len(lines)):
     new_line = lines[i]
-    if "prune_ratio" in lines[i]:
+    if "prune_ratio_step" in lines[i]:
         k = 1
         while "name" not in lines[i-k]:
             k += 1
         layer = lines[i-k].split('"')[1]
         if layer in pruned_ratio.keys():
-            new_line = lines[i].split("prune_ratio")[0] + "prune_ratio: " + str(pruned_ratio[layer]) + "\n"
+            new_line = lines[i].split("prune_ratio_step")[0] + "prune_ratio_step: " + str(pruned_ratio[layer]) + "\n"
     out_model_prototxt.write(new_line)
 out_model_prototxt.close()
 print("set prune ratio done")
