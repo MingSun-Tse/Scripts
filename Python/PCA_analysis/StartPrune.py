@@ -184,7 +184,7 @@ def softmax(x, exempted_layers = []):
     y[k] = pow(math.e, v) / sum(values)
   return y
 
-def assign_prune_ratio(model, weights, speedup = 2, exempted_layers = "", GFLOPs_weight = 0.8, keep_ratio_step = 0.1):
+def assign_prune_ratio(model, weights, speedup, exempted_layers = "", GFLOPs_weight = 0.8, keep_ratio_step = 0.1):
     assert(speedup > 0 and 0 <= GFLOPs_weight <= 1)
     exempted_layers = exempted_layers.split("/") if exempted_layers else []
     
@@ -307,7 +307,7 @@ def set_up_solver(solver, out_solver):
     # Set base_lr
     if beginwith_str(line, "base_lr"):
       original_base_lr = float(line.split(":")[1].strip())
-      prune_base_lr = min(max(original_base_lr/20, 1e-4), 9e-4) # constrain lr in [0.0001, 0.0009]
+      prune_base_lr = max(original_base_lr/20, 1e-4) # constrain lr > 0.0001 to make the pruning dynamic enough. This setting is intuitive.
       new_line = "base_lr: %s\n" % prune_base_lr
     # Reset below
     if beginwith_str(line, "regularization_type"):
@@ -468,7 +468,7 @@ iter_size_retrain_ = 0
 iter_size_final_retrain_ = 0
 baseline_acc_ = 0
 
-# Some setting
+# Some settings
 snapshot_when_prune = False
 for_acc = False
 
@@ -490,10 +490,12 @@ if __name__ == "__main__":
   parser.add_option("-w", "--weights", dest = "weights", type = "string", help = "the path of caffemodel")
   parser.add_option("-p", "--project", dest = "project", type = "string", help = "the path of project directory")
   parser.add_option("-g", "--gpu", dest = "gpu", type = "string", help = "the GPU id", default = "0")
-  parser.add_option("--for_acc", action="store_true", dest="for_acc")
-  parser.add_option("--for_pr", action="store_false", dest="for_acc")
+  parser.add_option("--for_acc", action = "store_true", dest="for_acc")
+  parser.add_option("--for_pr", action = "store_false", dest="for_acc")
+  parser.add_option("--speedup", dest = "speedup", type = "float", default = 2, help = "the target speedup when task at hand is 'given pr to get acc'")
   values, args = parser.parse_args(sys.argv)
   global for_acc;  for_acc = values.for_acc
+  if not for_acc: assert(values.speedup == 2) # check
 
   # Set up project directory
   # use abspath to avoid not finding paths when changing directories later
@@ -526,7 +528,7 @@ if __name__ == "__main__":
   
   # Set up train_val.prototxt
   change_batch_size("original_train_val.prototxt", "original_train_val_batch1.prototxt", "TRAIN", 1) # for use in assign_prune_ratio
-  pr_file = assign_prune_ratio("original_train_val_batch1.prototxt", weights_path) # PCA and GFLOPs analysis
+  pr_file = assign_prune_ratio("original_train_val_batch1.prototxt", weights_path, values.speedup) # PCA and GFLOPs analysis
   add_prune_param("original_train_val.prototxt", "original_train_val_added_prune_param.prototxt")
   set_prune_ratio(pr_file, "original_train_val_added_prune_param.prototxt", "train_val.prototxt")
   change_batch_size("train_val.prototxt", "train_val.prototxt", "TRAIN", batch_size_in_model_)
