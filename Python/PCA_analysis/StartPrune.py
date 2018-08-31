@@ -307,7 +307,10 @@ def set_up_solver(solver, out_solver):
     # Set base_lr
     if beginwith_str(line, "base_lr"):
       original_base_lr = float(line.split(":")[1].strip())
-      prune_base_lr = max(original_base_lr/20, 1e-4) # constrain lr > 0.0001 to make the pruning dynamic enough. This setting is intuitive.
+      if (original_base_lr >= 0.1 or original_base_lr <= 0.001):
+        respond = raw_input("Provided 'base_lr' is uncommonly large/small (%s), are you sure it's right? (y/n) " % original_base_lr)
+        if str.upper(respond) not in ["Y", "YES"]: exit(0)
+      prune_base_lr = original_base_lr/20 # This setting is intuitive.
       new_line = "base_lr: %s\n" % prune_base_lr
     # Reset below
     if beginwith_str(line, "regularization_type"):
