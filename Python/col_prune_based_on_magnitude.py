@@ -19,26 +19,29 @@ def prune_layer(net, layer, prune_ratio):
     w_abs = np.abs(w)
     w_colave = np.average(w_abs, axis = 0)
     index = np.argsort(w_colave)[: int(np.ceil(float(prune_ratio) * num_col))] # in ascending order
-    print ("the col to prune:", index[:])
+    print ("the col to prune:\n%s" % set(index[:]))
     
     w[:, index] = 0
     w.shape = net.params[layer][0].data.shape
     net.params[layer][0].data[:] = w[:]
-    return net
+    return net, set(index[:])
     
   
-## prune the most unimportant cols    
+## prune the most unimportant cols
 def prune_unimportant_cols(model, weights, prune_ratio):
     net = c.Net(model, weights, c.TEST)
     for layer_name, param in net.params.iteritems():
-        if len(param[0].data.shape) != 4:
+        if len(param[0].data.shape) != 4 or layer_name not in prune_ratio.keys():
             continue # do not prune fc layers
-        net = prune_layer(net, layer_name, prune_ratio)
+        net, _ = prune_layer(net, layer_name, prune_ratio[layer_name])
     net.save(weights.split('.caffemodel')[0] + '_pruned' + '.caffemodel')
 
 if __name__ == "__main__":
     assert(len(sys.argv) == 4)
-    model       = sys.argv[1]
-    weights     = sys.argv[2]
-    prune_ratio = sys.argv[3]
+    model, weights, pr_str = sys.argv[1:] # pr example: conv1:0.5-conv2:0.23-conv3:0.6, i.e. layer_name:pr
+    prune_ratio = {}
+    for i in pr_str.split("-"):
+      layer_name = i.split(":")[0].strip()
+      pr = float(i.split(":")[1].strip())
+      prune_ratio[layer_name] = pr
     prune_unimportant_cols(model, weights, prune_ratio)
