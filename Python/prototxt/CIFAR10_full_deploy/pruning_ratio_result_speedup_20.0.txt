@@ -1,0 +1,3 @@
+pruning ratio of conv1: 0.9098 (GFLOPs ratio = 0.200)
+pruning ratio of conv2: 1.0260 (GFLOPs ratio = 0.533)
+pruning ratio of conv3: 0.8282 (GFLOPs ratio = 0.267)

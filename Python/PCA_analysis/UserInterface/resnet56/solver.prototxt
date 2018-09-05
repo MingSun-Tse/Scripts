@@ -1,0 +1,22 @@
+## This solver is inherited from junyuseu's implementation of ResNet-56 on CIFAR-10:
+## https://github.com/junyuseu/ResNet-on-Cifar10/tree/master/without_data_augmentation/ResNet/56
+
+test_iter: 100
+test_interval: 1000
+test_initialization: true
+
+base_lr: 0.1
+lr_policy: "multistep"
+gamma:0.1
+stepvalue: 40000
+stepvalue: 80000
+max_iter : 100000
+
+momentum: 0.9
+weight_decay: 0.0001
+
+display: 100
+snapshot: 1000
+snapshot_prefix: "/home2/wanghuan/Projects/00_baseline_resnet56_cifar10_reimpl/weights/"
+            net: "/home2/wanghuan/Projects/00_baseline_resnet56_cifar10_reimpl/train_val.prototxt"
+solver_mode: GPU
