@@ -22,9 +22,83 @@ alexnet = {
 "conv5": [384, 1728],
 }
 
+vgg16_cp4x = {
+"conv1_1": [12, 27],
+"conv1_2": [64, 108],
+"conv2_1": [21, 576],
+"conv2_2": [128, 189],
+"conv3_1": [73, 1152],
+"conv3_2": [58, 657],
+"conv3_3": [256, 522],
+"conv4_1": [121, 2304],
+"conv4_2": [166, 1089],
+"conv4_3": [512, 1494],
+"conv5_1": [512, 4608],
+"conv5_2": [512, 4608],
+"conv5_3": [512, 4608],
+}
+
+resnet50 = {
+"conv1": [64, 147],
+"res2a_branch1": [256, 64],
+"res2a_branch2a": [64, 64],
+"res2a_branch2b": [64, 576],
+"res2a_branch2c": [256, 64],
+"res2b_branch2a": [64, 256],
+"res2b_branch2b": [64, 576],
+"res2b_branch2c": [256, 64],
+"res2c_branch2a": [64, 256],
+"res2c_branch2b": [64, 576],
+"res2c_branch2c": [256, 64],
+"res3a_branch1": [512, 256],
+"res3a_branch2a": [128, 256],
+"res3a_branch2b": [128, 1152],
+"res3a_branch2c": [512, 128],
+"res3b_branch2a": [128, 512],
+"res3b_branch2b": [128, 1152],
+"res3b_branch2c": [512, 128],
+"res3c_branch2a": [128, 512],
+"res3c_branch2b": [128, 1152],
+"res3c_branch2c": [512, 128],
+"res3d_branch2a": [128, 512],
+"res3d_branch2b": [128, 1152],
+"res3d_branch2c": [512, 128],
+"res4a_branch1": [1024, 512],
+"res4a_branch2a": [256, 512],
+"res4a_branch2b": [256, 2304],
+"res4a_branch2c": [1024, 256],
+"res4b_branch2a": [256, 1024],
+"res4b_branch2b": [256, 2304],
+"res4b_branch2c": [1024, 256],
+"res4c_branch2a": [256, 1024],
+"res4c_branch2b": [256, 2304],
+"res4c_branch2c": [1024, 256],
+"res4d_branch2a": [256, 1024],
+"res4d_branch2b": [256, 2304],
+"res4d_branch2c": [1024, 256],
+"res4e_branch2a": [256, 1024],
+"res4e_branch2b": [256, 2304],
+"res4e_branch2c": [1024, 256],
+"res4f_branch2a": [256, 1024],
+"res4f_branch2b": [256, 2304],
+"res4f_branch2c": [1024, 256],
+"res5a_branch1": [2048, 1024],
+"res5a_branch2a": [512, 1024],
+"res5a_branch2b": [512, 4608],
+"res5a_branch2c": [2048, 512],
+"res5b_branch2a": [512, 2048],
+"res5b_branch2b": [512, 4608],
+"res5b_branch2c": [2048, 512],
+"res5c_branch2a": [512, 2048],
+"res5c_branch2b": [512, 4608],
+"res5c_branch2c": [2048, 512],
+}
+
 NumRowCol = {
 'alexnet': alexnet,
 'caffenet': alexnet,
+'vgg_ilsvrc_16_layers': vgg16_cp4x,
+'resnet-50': resnet50,
 }
 
 
@@ -39,11 +113,11 @@ for line in open(inFile):
     line = line.strip()
     if not IF_find_net:
         line = line.lower()
-        if "name" in line and "net" in line and '"' in line: 
+        if "name" in line and '"' in line: 
             net_name = line.split('"')[1].lower() # net name is using lower case
             print("the net is {}".format(net_name))
             IF_find_net = True
-            
+       
     if "squeezing to" in line:
         num_row_left = int(line.split("squeezing to ")[1].split("x")[0])
         num_col_left = int(line.split("squeezing to ")[1].split("x")[1])
@@ -68,9 +142,12 @@ for line in open(inFile):
 
 layers = list(gpu_gemm_time.keys())
 layers.sort()
+total_conv_time = 0
 for layer in layers:
     if layer not in speedup.keys():
         speedup[layer] = 1.0
     ave_time = gpu_gemm_time[layer][0] / gpu_gemm_time[layer][1]
     output = "{}: {} us ({} examples)  theoretical_speedup:{:.2f}"
     print(output.format(layer, ave_time, gpu_gemm_time[layer][1], speedup[layer]))
+    total_conv_time += ave_time
+print("total conv time: %.2f" % total_conv_time)
