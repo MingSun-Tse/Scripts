@@ -24,8 +24,8 @@ if sys.argv[2] in ('step', 'Step'):
         inFile = prune_txts[0]
     else:
         inFile = sys.argv[1]
-        assert(inFile.endswith("prune.txt"))
-    os.system('cat %s | grep "Step" > %s' % (inFile, inFile.replace('_prune.txt', '_Step.txt')))
+        assert("prune" in inFile)
+    os.system('cat %s | grep "Step" > %s' % (inFile, inFile.replace('_prune.txt', '_Step.log')))
     
 elif sys.argv[2] in ('acc'):
     os.system('cat %s | grep "accuracy = "' % sys.argv[1])

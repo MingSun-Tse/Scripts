@@ -38,8 +38,23 @@ def get_test_batch_size(model):
         if cnt == 2:
             return int(l.split(":")[1].split("#")[0].strip())
     print ("Error: train or test batch_size is not defined, please chech your net ptototxt.")
-    return 0
+    exit(1)
 
+def change_test_batch_size(model, batch_size):
+    assert os.path.isfile(model)
+    output_file = model.replace(".prototxt", "_test-batch-size=" + str(batch_size) + ".prototxt")
+    output = open(output_file, "w+")
+    cnt = 0
+    for line in open(model):
+        newline = line
+        if "batch_size" in line:
+            cnt += 1
+            if cnt == 2:
+                newline = line.split("batch_size")[0] + "batch_size: " + str(batch_size) + "\n"
+        output.write(newline)
+    output.close()
+    assert(cnt == 2)
+    return output_file
 
 def get_netproto(dir):
     assert dir.endswith("weights") or dir.endswith("weights/")
@@ -97,7 +112,26 @@ def get_pid(f):
                 return pid
     print ("Error: cannot get pid")
     return
-    
 
+def get_loss_acc(logFile):
+    '''log example:
+        I0502 16:36:55.485412  5246 caffe.cpp:325] loss = 1.52132 (* 1 = 1.52132 loss)
+        I0502 16:36:55.485425  5246 caffe.cpp:325] top-1-accuracy = 0.6375
+        I0502 16:36:55.485433  5246 caffe.cpp:325] top-5-accuracy = 0.8875
+    '''
+    lines = open(logFile).readlines()
+    num_line = len(lines)
+    loss, acc1, acc5 = -1, -1, -1
+    for i in range(num_line - 1, num_line - 11, -1): # In the last 10 lines, there should be loss, acc1 and acc5.
+        line = lines[i].lower()
+        if "loss = " in line and loss == -1:
+            loss = float(line.split("loss = ")[1].split(" ")[0])
+        if "acc" in line and " = " in line:
+            if "5" in line.split(" = ")[0].split("]")[1]:
+                acc5 = float(line.strip().split(" = ")[1]) if acc5 == -1 else acc5
+            else:
+                acc1 = float(line.strip().split(" = ")[1]) if acc1 == -1 else acc1
+    return loss, acc1, acc5
+    
     
     

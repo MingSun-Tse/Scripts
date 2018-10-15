@@ -55,7 +55,7 @@ def main():
         print ("Saving done, going to plot")
     
     # plot
-    step = 500
+    step = 1000
     layers = sorted(trajectory.keys())
     for layer in layers:
         traj = np.array(trajectory[layer])
@@ -65,8 +65,8 @@ def main():
         cols_to_prune = np.argsort(traj[0, 1:])[:int(np.ceil(PruneRatios[layer] * num_col))] # the columns which should be pruned based on their L1, at iter 0
         
         for i in range(num_col):#np.random.permutation(num_col): # i: column number
-            # color = 'b' if i in cols_to_prune else 'b'
-            plt.plot(traj[:,0][::step], traj[:,i+1][::step], color='b', alpha=0.5, label = layer+"-"+str(i), linewidth = 0.2)
+            color = 'r' if i in cols_to_prune else 'b'
+            plt.plot(traj[:,0][::step], traj[:,i+1][::step], color=color, alpha=0.5, label = layer+"-"+str(i), linewidth = 0.2)
             print ("Plotting %s-%s" % (layer, i))
         plt.xlabel("Iteration"); plt.ylabel("Average magnitude of weight column")
         plt.savefig(inFile.replace(".log", "_" + layer + ".pdf"))

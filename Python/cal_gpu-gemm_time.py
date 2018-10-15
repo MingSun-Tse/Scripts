@@ -8,10 +8,11 @@ example of the log:
     I0301 11:58:35.466789 32183 base_conv_layer.cpp:833] conv1	 group 0: 14.56 us (Concatenation Timing)
     I0301 11:58:35.467243 32183 base_conv_layer.cpp:833] conv1	 group 0: 14.528 us (Concatenation Timing)
 
-python  this_file.py  **log_file_like_above**
+python  this_file.py  **log_file_like_above**  alexnet
 '''
-assert(len(sys.argv) == 2)
-inFile = sys.argv[1]
+assert(len(sys.argv) == 3)
+inFile   = sys.argv[1]
+net_name = sys.argv[2]
 
 # the number of rows and columns
 alexnet = {
@@ -22,6 +23,7 @@ alexnet = {
 "conv5": [384, 1728],
 }
 
+<<<<<<< HEAD
 vgg16_cp4x = {
 "conv1_1": [12, 27],
 "conv1_2": [64, 108],
@@ -33,6 +35,19 @@ vgg16_cp4x = {
 "conv4_1": [121, 2304],
 "conv4_2": [166, 1089],
 "conv4_3": [512, 1494],
+=======
+vgg16 = {
+"conv1_1": [64, 27],
+"conv1_2": [64, 576],
+"conv2_1": [128, 576],
+"conv2_2": [128, 1152],
+"conv3_1": [256, 1152],
+"conv3_2": [256, 2304],
+"conv3_3": [256, 2304],
+"conv4_1": [512, 2304],
+"conv4_2": [512, 4608],
+"conv4_3": [512, 4608],
+>>>>>>> 3f9cc548671e4532359c483e35373a9fc9e3c82f
 "conv5_1": [512, 4608],
 "conv5_2": [512, 4608],
 "conv5_3": [512, 4608],
@@ -97,20 +112,24 @@ resnet50 = {
 NumRowCol = {
 'alexnet': alexnet,
 'caffenet': alexnet,
+<<<<<<< HEAD
 'vgg_ilsvrc_16_layers': vgg16_cp4x,
 'resnet-50': resnet50,
+=======
+'vgg16': vgg16,
+'resnet50': resnet50
+>>>>>>> 3f9cc548671e4532359c483e35373a9fc9e3c82f
 }
 
 
-gpu_gemm_time = {}
+gpu_gemm_time = {} # layer_name: [total_time, time_iter]
 speedup = {}
 matrix_left = {}
-net_name = ""
-IF_find_net = False
-
+IF_after_Benchmark = False
 
 for line in open(inFile):
     line = line.strip()
+<<<<<<< HEAD
     if not IF_find_net:
         line = line.lower()
         if "name" in line and '"' in line: 
@@ -118,6 +137,12 @@ for line in open(inFile):
             print("the net is {}".format(net_name))
             IF_find_net = True
        
+=======
+    if not IF_after_Benchmark:
+        if "Benchmark begins" in line:
+            IF_after_Benchmark = True # find the "Benchmark begins", don't count the timing before "Benchmark begins"
+            
+>>>>>>> 3f9cc548671e4532359c483e35373a9fc9e3c82f
     if "squeezing to" in line:
         num_row_left = int(line.split("squeezing to ")[1].split("x")[0])
         num_col_left = int(line.split("squeezing to ")[1].split("x")[1])
@@ -129,25 +154,44 @@ for line in open(inFile):
         num_row = NumRowCol[net_name][layer_name][0]
         num_col = NumRowCol[net_name][layer_name][1]
         speedup[layer_name] = num_row * num_col * 1.0 / matrix_left[layer_name]
-        
-    if line.endswith("Timing)"):
+    
+    if IF_after_Benchmark and line.lower().endswith("timing)"):
         layer_name = line.split("\t")[0].split(" ")[-1]
         if layer_name in gpu_gemm_time.keys():
             gpu_gemm_time[layer_name][0] += float(line.split("]")[1].split(" ")[4])
             if line.split("]")[1].split(" ")[3] == "0:":
-                gpu_gemm_time[layer_name][1] += 1
+                gpu_gemm_time[layer_name][1] += 1 # only count once for group > 1
         else:
             gpu_gemm_time[layer_name] = [float(line.split("]")[1].split(" ")[4]), 1]
-            assert(line.split("]")[1].split(" ")[3] == "0:") # group should be `group: 0`
+            assert(line.split("]")[1].split(" ")[3] == "0:") # group should be `group: 0` because it's the first time meeting this layer
 
 layers = list(gpu_gemm_time.keys())
 layers.sort()
+<<<<<<< HEAD
 total_conv_time = 0
+=======
+sum_ave_time = 0
+for layer in layers:
+    ave_time = gpu_gemm_time[layer][0] / gpu_gemm_time[layer][1]
+    sum_ave_time += ave_time
+
+>>>>>>> 3f9cc548671e4532359c483e35373a9fc9e3c82f
 for layer in layers:
     if layer not in speedup.keys():
         speedup[layer] = 1.0
     ave_time = gpu_gemm_time[layer][0] / gpu_gemm_time[layer][1]
+<<<<<<< HEAD
     output = "{}: {} us ({} examples)  theoretical_speedup:{:.2f}"
     print(output.format(layer, ave_time, gpu_gemm_time[layer][1], speedup[layer]))
     total_conv_time += ave_time
 print("total conv time: %.2f" % total_conv_time)
+=======
+    output = "{:25s}  {:10.1f} us  {:-.1f}%  ({} examples)  theoretical_speedup:{:.2f}"
+    print(output.format(layer,
+                        ave_time, 
+                        ave_time * 100.0 / sum_ave_time,
+                        gpu_gemm_time[layer][1],
+                        speedup[layer]))
+
+# TODO: sort by time percentage
+>>>>>>> 3f9cc548671e4532359c483e35373a9fc9e3c82f
