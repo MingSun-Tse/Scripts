@@ -154,32 +154,6 @@ def get_num_zero_row(model, weights):
         print ("%d rows of layer %s can be pruned." % (num_zero_row[layer], layer))
     return num_zero_row
                 
-def make_new_net(num_zero_row, model_old):
-    lines = [l for l in open(model_old)]
-    out_net = open(model_old.replace(".prototxt", "_pruned.prototxt"), "w+")
-    for i in range(len(lines)):
-        new_l = lines[i]
-        if "num_output" in lines[i]:
-            # get layer type
-            k = 1
-            print (lines[i])
-            while (not "convolution_param" in lines[i-k]) or (not "inner_product_param" in lines[i-k]):
-                k += 1
-                print (lines[i-k])
-            layer_type = "Conv" if "convolution_param" in lines[i-k] else "FC"
-            print (layer_type)
-            if layer_type == "Conv":
-                # get layer name
-                k = 1
-                while ~("name" in lines[i-k]):
-                    k += 1
-                layer_name = lines[i-k].split('"')[1]
-                num_row_origin = int(lines[i].split("num_output:")[1].strip())
-                print (num_row_origin, num_zero_row[layer_name])
-                new_l = lines[i].split("num_output")[0] + "num_output: " + str(num_row_origin - num_zero_row[layer_name])
-        out_net.write(new_l)
-    out_net.close()
-    print ("make new net done.")
 
 
 def clear_bias(model, weights, model_new):
@@ -205,8 +179,7 @@ def get_connected_layer(model):
             result.append(pair)
     return result
             
-def shrink_ind_layer(net_old, net_new, layer):
-    pass
+
 def shrink_dep_layer(net_old, net_new, layer1, layer2):
     w1 = net_old.params[layer1]
     w2 = net_old.params[layer2]

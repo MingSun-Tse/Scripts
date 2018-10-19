@@ -1,6 +1,7 @@
 import sys
 import util
 import numpy as np
+sys.path.insert(0, "/home/wanghuan/Caffe/caffe/python")
 import caffe as c
 
 def prune_layer(net, layer, prune_ratio):
@@ -32,6 +33,7 @@ def prune_unimportant_cols(model, weights, prune_ratio):
         net = prune_layer(net, layer_name, prune_ratio)
     net.save(weights.split('.caffemodel')[0] + '_pruned' + '.caffemodel')
 
+  
 if __name__ == "__main__":
     assert(len(sys.argv) == 4)
     model       = sys.argv[1]
