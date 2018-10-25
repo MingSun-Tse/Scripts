@@ -83,8 +83,16 @@ def Slim(model, caffemodel, model_slimmed = None):
           biases[-2]  =  biases[-2][saved_rows_last_layer]
           
     # Save new caffemodels
+    print("========> Zero the pruned rows")
+    for layer, param in net.params.iteritems():
+      w = param[0].data
+      if len(w.shape) != 4: continue # only consider Conv
+      num_col = w.shape[1]* w.shape[2]* w.shape[3]
+      for pruned_row in pruned_rows[layer]:
+        net.params[layer][0].data[pruned_row][:] = np.zeros(w.shape[1:])
     net.save(caffemodel.split(".caffemodel")[0] + "_row-zeroed.caffemodel")
     if model_slimmed:
+      print("========> Remove the pruned_rows")
       net_slimmed = c.Net(model_slimmed, FLAG)
       for l in range(len(layers)):
         layer_name = layers[l]

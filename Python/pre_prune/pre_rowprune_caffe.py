@@ -1,7 +1,6 @@
 import sys
-import util
 import numpy as np
-sys.path.insert(0, "/home/wanghuan/Caffe/caffe/python")
+sys.path.insert(0, "/home2/wanghuan/Caffe/Caffe_default/python")
 import caffe as c
 
 def filter_prune(weight, num_keeped_row):
@@ -38,11 +37,11 @@ def squeeze(model1, weights1, model2):
       keeped_row_index[layer] = range(w1.shape[0])
     
     # squeeze
-    net2.params[layer][1].data[:] = b1[keeped_row_index[layer]] # biases
-    if last_layer_name == "None":
-      net2.params[layer][0].data[:] = w1[keeped_row_index[layer]][:, keeped_row_index[last_layer_name], :, :]
+    net2.params[layer][1].data[:] = net1.params[layer][1].data[keeped_row_index[layer]] # biases
+    if last_layer_name != "None":
+      net2.params[layer][0].data[:] = net1.params[layer][0].data[keeped_row_index[layer]][:, keeped_row_index[last_layer_name], :, :]
     else: # the first conv layer
-      net2.params[layer][0].data[:] = w1[keeped_row_index[layer]]
+      net2.params[layer][0].data[:] = net1.params[layer][0].data[keeped_row_index[layer]]
   net2.save("slimmed.caffemodel")
 
 if __name__ == "__main__":
