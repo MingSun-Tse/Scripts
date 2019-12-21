@@ -151,3 +151,7 @@ def cut_pth(model1, model2):
       dict_params2[name2].data.copy_(dict_params1[name2].data)
   model2.load_state_dict(dict_params2)
   torch.save(model2.state_dict(), "model2.pth")
+
+# --------------------------
+# last update: 2019-12-21
+# --------------------------
